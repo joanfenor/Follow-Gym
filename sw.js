@@ -1,8 +1,8 @@
 // Mis entrenos · service worker
-const VERSION = 'v2';
+const VERSION = 'v3';
 const PREFIX = 'misentrenos-';            // prefijo propio: no toca la caché de otras apps del mismo github.io
 const CACHE = PREFIX + VERSION, IMGC = PREFIX + 'fotos';
-const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
+const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icono-32.png', 'icono-192.png', 'icono-512.png', 'icono-180.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));

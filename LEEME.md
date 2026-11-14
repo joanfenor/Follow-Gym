@@ -10,7 +10,7 @@ App personal para apuntar el entreno de pesas: plan, días de gimnasio, pesos m�
 5. En el móvil: Chrome → ⋮ → **Instalar aplicación** o **Añadir a pantalla de inicio**.
 
 ## Actualizar
-Sube los archivos del zip nuevo encima (como mínimo `index.html` y `sw.js`). La versión sale abajo en la portada.
+Sube los archivos del zip nuevo encima (como mínimo `index.html`, `sw.js`, `manifest.webmanifest` y los `icono-*.png`). La versión sale abajo en la portada.
 
 ## Datos
 Se guardan solo en el móvil (en el navegador). Haz **Ajustes → Exportar copia** de vez en cuando.

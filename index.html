@@ -9,8 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="Mis entrenos">
 <meta name="theme-color" content="#0f1216">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icono-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icono-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icono-180.png">
 <title>Mis entrenos</title>
 <style>
 :root{--bg:#0f1216;--card:#191e25;--card2:#222933;--tx:#e8edf2;--mu:#8a96a3;--ac:#ff8a3d;--ac2:#5aa9ff;--ok:#3ecf8e;--bd:#2a323d}
@@ -160,6 +161,14 @@ input::placeholder{color:#5d6773}
 .sortb{background:var(--card2);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:7px 11px;font-size:13px;font-weight:600;flex:none}
 .sortb.on{background:var(--ok);color:#06210f;border-color:var(--ok)}
 .ex.srt .exh{padding:6px 8px}
+.ex.srt{transition:transform .15s ease;position:relative;background:var(--card)}
+.ex.srt.dragging{transition:none;z-index:10;box-shadow:0 10px 30px rgba(0,0,0,.55);border-color:var(--ac)}
+.drag{flex:none;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--mu);background:var(--card2);border-radius:10px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.stale{display:inline-block;margin-left:6px;font-size:11px;font-weight:700;color:#ffd43b;background:rgba(255,212,59,.12);border:1px solid rgba(255,212,59,.4);border-radius:6px;padding:0 6px;white-space:nowrap}
+.stalebox{background:rgba(255,212,59,.1);border:1px solid rgba(255,212,59,.4);color:#ffe8a3;border-radius:10px;padding:9px 10px;font-size:13px;margin:0 0 10px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.stalebox .sortb{margin-left:auto}
+.prow{display:flex;justify-content:space-between}
+.pdel{color:#ff8b8b}
 .pex .pic.thumb{width:44px;height:44px}
 .li[data-info]{cursor:pointer}
 .btn:disabled{opacity:.35}
@@ -218,7 +227,7 @@ input::placeholder{color:#5d6773}
 <div id="ov" hidden><div id="ovBody"></div></div>
 <div id="toast"></div>
 <div id="cover"><div class="cv">
-  <img class="cvicon" src="icon-512.png" alt="">
+  <img class="cvicon" src="icono-512.png" alt="">
   <h1>Mis entrenos</h1>
   <div class="cvsub" id="cvHello"></div>
   <div class="cvcard" id="cvInfo"></div>
@@ -228,7 +237,7 @@ input::placeholder{color:#5d6773}
 
 <script>
 'use strict';
-const APP_VERSION = 'v2';
+const APP_VERSION = 'v3';
 const KEY = 'entreno_pesas_v2', KEY_V1 = 'entreno_pesas_v1';
 /* Fotos: free-exercise-db (dominio público, github.com/yuhonas/free-exercise-db) */
 const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
@@ -335,7 +344,7 @@ const logsFor = n => state.logs.filter(l => l.n === n).sort((a,b) => a.date.loca
 const hasLogs = n => state.logs.some(l => l.n === n);
 function suggestedDay(plan){
   if (!plan.days.length) return null;
-  let last = null; for (const l of state.logs) if (l.plan === plan.id && newer(l,last)) last = l;
+  let last = null; for (const l of state.logs) if ((l.plan === plan.id || (plan.base && l.plan === plan.base)) && newer(l,last)) last = l;
   if (!last) return plan.days[0].id;
   const i = plan.days.findIndex(d => d.id === last.day);
   if (i < 0) return plan.days[0].id;
@@ -349,6 +358,42 @@ function dayIndex(){
   for (const d of Object.keys(state.visits)) if (state.visits[d]) m[d] = m[d] || { groups:new Set(), logs:[] };
   Object.values(m).forEach(v => { v.groups = [...GROUPS, 'Otros'].filter(g => v.groups.has(g)); });
   return m;
+}
+
+/* ---------- ejercicio que llevas mucho tiempo haciendo ---------- */
+const dBetween = (a, b) => Math.round((parseISO(b) - parseISO(a)) / 864e5);
+function staleMonths(n){
+  const ds = [...new Set(state.logs.filter(l => l.n === n).map(l => l.date))].sort().reverse();
+  if (!ds.length || dBetween(ds[0], todayISO()) > 45) return 0;          // ya no lo haces
+  let start = ds[0];
+  for (let i = 1; i < ds.length; i++) { if (dBetween(ds[i], start) > 45) break; start = ds[i]; } // racha sin parones de más de 45 días
+  const d = dBetween(start, todayISO());
+  return d >= 90 ? Math.floor(d / 30.4) : 0;
+}
+const staleBadge = n => { const m = staleMonths(n); return m ? ` <span class="stale">⚠️ ${m} meses</span>` : ''; };
+const staleNote = (n, withBtn) => { const m = staleMonths(n); return m ? `<div class="stalebox"><span>⚠️ Llevas <b>${m} meses</b> seguidos con este ejercicio. Cambiarlo por otro de ${esc(groupOf(n))} ayuda a seguir progresando.</span>${withBtn ? ' <button class="sortb" data-act="swap">⇄ Cambiar</button>' : ''}</div>` : ''; };
+const planName = id => (state.plans.find(p => p.id === id) || {}).name || 'plan eliminado';
+
+/* ---------- cambios en un día: ¿dónde se guardan? ---------- */
+const isTpl = p => p.id !== 'mi' && !p.custom;
+const saveOK = {};          // plantillas en las que hoy ya has dicho «guardar aquí»
+let pendingChange = null;
+function copyPlan(ap){
+  const c = clone(ap); c.id = 'c' + uid(); c.base = ap.base || ap.id; c.custom = true;
+  c.name = ap.name + ' · mío'; c.desc = `Tu versión personalizada de «${ap.name}»`;
+  state.plans.splice(state.plans.indexOf(ap) + 1, 0, c); state.activePlan = c.id; return c;
+}
+function changeDay(fn){
+  const ap = activePlan();
+  if (!isTpl(ap) || saveOK[ap.id] === todayISO()) { fn(curDay()); save(); render(); return; }
+  pendingChange = fn; renderHoy();
+  openOv('save', `<h2>¿Dónde guardo el cambio?</h2>
+    <p class="muted">Estás usando «${esc(ap.name)}». El cambio se mantiene para los próximos días.</p>
+    <button class="btn" id="svCopy">⭐ En mi versión personalizada</button>
+    <div class="muted" style="margin:6px 2px 12px">Crea «${esc(ap.name)} · mío» con tu cambio y lo deja como plan activo. La plantilla original no se toca.</div>
+    <button class="btn sec" id="svPlan">En «${esc(ap.name)}»</button>
+    <div class="muted" style="margin:6px 2px 12px">Se puede deshacer con «Restaurar» en Ajustes. Hoy no te lo vuelvo a preguntar.</div>
+    <button class="btn ghost" id="ovClose">Cancelar</button>`);
 }
 
 /* ---------- foto ---------- */
@@ -389,9 +434,9 @@ function renderHoy(){
     <div class="prog"><i style="width:${tot ? done/tot*100 : 0}%"></i></div><div class="muted" style="margin-top:6px">${done} de ${tot} ejercicios apuntados</div></div>`;
   if (!tot) h += `<p class="empty">Este día no tiene ejercicios todavía.</p>`;
   if (sortMode) {
-    h += `<p class="muted">Mueve los ejercicios con las flechas. El orden se guarda en «${esc(day.name)}» de tu plan.</p>` + day.ex.map((n, i) =>
-      `<div class="ex srt" style="--gc:${gc(groupOf(n))}"><div class="exh">${pic(n,'thumb')}<div class="exm"><div class="en">${i+1}. ${esc(n)}</div><div class="exs">${esc(groupOf(n))}</div></div>
-        <button class="ib" data-mv="${i}" data-d="-1" ${i===0?'disabled':''}>↑</button><button class="ib" data-mv="${i}" data-d="1" ${i===tot-1?'disabled':''}>↓</button></div></div>`).join('');
+    h += `<p class="muted">Mantén pulsado <b>⠿</b> y arrastra el ejercicio a su sitio.</p><div id="srtList">` + day.ex.map((n, i) =>
+      `<div class="ex srt" style="--gc:${gc(groupOf(n))}"><div class="exh">${pic(n,'thumb')}<div class="exm"><div class="en">${i+1}. ${esc(n)}</div><div class="exs">${esc(groupOf(n))}${staleBadge(n)}</div></div>
+        <span class="drag" aria-label="Arrastrar">⠿</span></div></div>`).join('') + `</div>`;
     $('#v-hoy').innerHTML = h; return;
   }
   day.ex.forEach((n, i) => {
@@ -399,9 +444,9 @@ function renderHoy(){
     const fv = (o,f) => o && o[f] != null && o[f] !== '' ? esc(f==='min'||f==='max' ? fmtN(o[f]) : o[f]) : '';
     h += `<div class="ex ${cur?'done':''} ${open?'open':''}" style="--gc:${gc(g)}" data-i="${i}">
       <button class="exh" data-act="toggle">${pic(n,'thumb')}
-        <div class="exm"><div class="en">${esc(n)}</div><div class="exs">${cur ? `✓ ${rng(cur)}${sr(cur)}` : prev ? `Última: ${rng(prev)}` : 'Sin registros'}</div></div>
+        <div class="exm"><div class="en">${esc(n)}</div><div class="exs">${cur ? `✓ ${rng(cur)}${sr(cur)}` : prev ? `Última: ${rng(prev)}` : 'Sin registros'}${staleBadge(n)}</div></div>
         <span class="chev">›</span></button>`;
-    if (open) h += `<div class="exb">${pic(n,'big')}
+    if (open) h += `<div class="exb">${pic(n,'big')}${staleNote(n, true)}
         <div class="prev">${gtag(g)} &nbsp;${prev ? `Última vez (${fmt(prev.date)}): <b>${rng(prev)}</b>${sr(prev)}` : 'Primera vez con este ejercicio'}</div>
         <div class="inp">
           <label>Mín kg<input inputmode="decimal" data-f="min" value="${fv(v,'min')}" placeholder="${fv(prev,'min')}"></label>
@@ -451,18 +496,44 @@ $('#v-hoy').addEventListener('click', e => {
   if (chip) { selDay = chip.dataset.day; openIdx = null; sortMode = false; renderHoy(); return; }
   if (e.target.id === 'addEx') { openPicker('add'); return; }
   if (e.target.id === 'sortBtn') { sortMode = !sortMode; openIdx = null; renderHoy(); return; }
-  const mv = e.target.closest('[data-mv]');
-  if (mv) { const day = curDay(), i = +mv.dataset.mv, j = i + +mv.dataset.d;
-    if (j >= 0 && j < day.ex.length) { [day.ex[i], day.ex[j]] = [day.ex[j], day.ex[i]]; save(); renderHoy(); } return; }
   const b = e.target.closest('[data-act]'); if (!b) return;
   const card = b.closest('.ex'), i = +card.dataset.i, day = curDay(), n = day.ex[i];
   const a = b.dataset.act;
   if (a === 'toggle') { openIdx = openIdx === i ? null : i; renderHoy(); }
   else if (a === 'save') saveCard(card, n);
   else if (a === 'swap') openPicker('swap', i);
-  else if (a === 'del' && confirm(`¿Quitar "${n}" de este día?\n(El historial se conserva)`)) { day.ex.splice(i,1); openIdx = null; save(); render(); }
+  else if (a === 'del' && confirm(`¿Quitar "${n}" de este día?\n(El historial se conserva)`)) { openIdx = null; changeDay(d => d.ex.splice(d.ex.indexOf(n), 1)); }
   else if (a === 'unlog' && confirm(`¿Borrar lo apuntado hoy en "${n}"?`)) { state.logs = state.logs.filter(l => !(l.n === n && l.date === selDate)); save(); render(); }
 });
+/* arrastrar con el dedo para ordenar */
+let drag = null;
+$('#v-hoy').addEventListener('pointerdown', e => {
+  const hd = e.target.closest('.drag'); if (!hd || !sortMode) return;
+  e.preventDefault();
+  const rows = [...document.querySelectorAll('#srtList .srt')], row = hd.closest('.srt');
+  const rects = rows.map(x => { const b = x.getBoundingClientRect(); return { top: b.top + scrollY, h: b.height }; });
+  drag = { rows, rects, from: rows.indexOf(row), to: rows.indexOf(row), y0: e.clientY + scrollY };
+  row.classList.add('dragging'); try { hd.setPointerCapture(e.pointerId); } catch(err){}
+  if (navigator.vibrate) navigator.vibrate(15);
+});
+$('#v-hoy').addEventListener('pointermove', e => {
+  if (!drag) return;
+  const R = drag.rects, f = drag.from, dy = e.clientY + scrollY - drag.y0;
+  drag.rows[f].style.transform = `translateY(${dy}px)`;
+  const c = R[f].top + R[f].h / 2 + dy;
+  let to = 0; R.forEach((x, k) => { if (k !== f && c > x.top + x.h / 2) to++; });
+  drag.to = to; const sh = R[f].h + 8;
+  drag.rows.forEach((x, k) => { if (k === f) return; let m = 0;
+    if (f < to && k > f && k <= to) m = -sh; if (f > to && k >= to && k < f) m = sh;
+    x.style.transform = m ? `translateY(${m}px)` : ''; });
+  if (e.clientY < 90) scrollBy(0, -12); else if (e.clientY > innerHeight - 120) scrollBy(0, 12);
+});
+function dragEnd(){
+  if (!drag) return; const { from, to } = drag; drag = null;
+  if (from !== to) changeDay(d => { const [x] = d.ex.splice(from, 1); d.ex.splice(to, 0, x); }); else renderHoy();
+}
+$('#v-hoy').addEventListener('pointerup', dragEnd);
+$('#v-hoy').addEventListener('pointercancel', dragEnd);
 $('#v-hoy').addEventListener('change', e => { if (e.target.id === 'fDate') { selDate = e.target.value || todayISO(); openIdx = null; render(); } });
 
 /* ---------- selector de ejercicios ---------- */
@@ -473,7 +544,7 @@ function openPicker(mode, i){
   pick.group = mode === 'swap' ? groupOf(day.ex[i]) : (dayGroups(day)[0] || GROUPS[0]);
   renderPicker(); $('#ov').hidden = false;
 }
-function closePicker(){ $('#ov').hidden = true; ovMode = null; }
+function closePicker(){ const was = ovMode; $('#ov').hidden = true; ovMode = null; if (was === 'save') { pendingChange = null; renderHoy(); } }
 function renderPicker(){
   const day = curDay(), inDay = new Set(day.ex), cat = catalog();
   const list = (cat[pick.group] || []).filter(n => !inDay.has(n));
@@ -485,9 +556,12 @@ function renderPicker(){
 }
 function addCustom(n, g){ if (!GRP[n] && !state.custom.some(c => c.n === n)) state.custom.push({ n, g }); }
 function applyPick(n){
-  const day = curDay();
-  if (pick.mode === 'swap') { day.ex[pick.i] = n; openIdx = pick.i; } else { day.ex.push(n); openIdx = day.ex.length - 1; }
-  save(); closePicker(); render();
+  const mode = pick.mode, old = pick.i != null ? curDay().ex[pick.i] : null;
+  closePicker();
+  changeDay(d => {
+    if (mode === 'swap') { const k = d.ex.indexOf(old); if (k >= 0) { d.ex[k] = n; openIdx = k; } }
+    else { d.ex.push(n); openIdx = d.ex.length - 1; }
+  });
 }
 $('#ov').addEventListener('click', e => {
   if (e.target.id === 'ov' || e.target.closest('#ovClose')) { closePicker(); return; }
@@ -495,6 +569,13 @@ $('#ov').addEventListener('click', e => {
     const g = e.target.closest('[data-g]'); if (g) { pick.group = g.dataset.g; renderPicker(); return; }
     const n = e.target.closest('[data-n]'); if (n) { applyPick(n.dataset.n); return; }
     if (e.target.id === 'newExBtn') { const name = $('#newEx').value.trim(); if (!name) return; addCustom(name, pick.group); applyPick(name); }
+  } else if (ovMode === 'save') {
+    if (e.target.id === 'svPlan' || e.target.id === 'svCopy') {
+      const ap = activePlan(), fn = pendingChange; pendingChange = null;
+      if (e.target.id === 'svPlan') saveOK[ap.id] = todayISO();
+      else { const c = copyPlan(ap); toast(`Creado «${c.name}» y puesto como plan activo`); }
+      fn(curDay()); save(); closePicker(); render();
+    }
   } else if (ovMode === 'info') {
     const ge = e.target.closest('[data-goevo]');
     if (ge) { evoEx = ge.dataset.goevo; evoTab = 'pesos'; closePicker(); show('evo'); }
@@ -509,7 +590,7 @@ $('#ov').addEventListener('input', e => { if (e.target.id === 'wipeTxt') $('#wip
 /* ficha de ejercicio (foto grande + resumen) */
 function openInfo(n){
   const g = groupOf(n), L = logsFor(n);
-  let h = `<h2>${esc(n)}</h2>${pic(n,'big')}<div class="gtags" style="margin-bottom:6px">${gtag(g)}</div>`;
+  let h = `<h2>${esc(n)}</h2>${pic(n,'big')}${staleNote(n, false)}<div class="gtags" style="margin-bottom:6px">${gtag(g)}</div>`;
   if (L.length) {
     const last = L[L.length-1], rec = L.reduce((a,l) => l.max > a.max ? l : a, L[0]);
     h += `<div class="stats"><div class="st"><div class="k1">Última sesión</div><div class="v">${rng(last)}</div><div class="s">${fmt(last.date)}${sr(last)}</div></div>
@@ -579,6 +660,8 @@ function asisHTML(){
   if (!inf) h += `<div class="muted">No consta que fueras al gimnasio este día.</div>`;
   else {
     h += inf.groups.length ? `<div class="gtags" style="margin-bottom:8px">${inf.groups.map(gtag).join('')}</div>` : `<div class="muted">✓ Fuiste al gimnasio (sin ejercicios apuntados).</div>`;
+    const pls = [...new Set(inf.logs.map(l => planName(l.plan)))];
+    if (pls.length) h += `<div class="muted" style="margin-bottom:6px">Plan: ${pls.map(esc).join(' + ')}</div>`;
     h += inf.logs.sort((a,b) => GROUPS.indexOf(a.g) - GROUPS.indexOf(b.g)).map(l => `<div class="dl">${pic(l.n,'thumb')}<div class="x">${esc(l.n)}<div class="muted">${rng(l)}${sr(l)}</div></div></div>`).join('');
   }
   h += `</div>`;
@@ -644,7 +727,7 @@ function renderCat(){
   for (const g of Object.keys(cat)) {
     h += `<h3 style="color:${gc(g)}">${esc(g)}</h3>` + cat[g].map(n => {
       const custom = !GRP[n];
-      return `<div class="li" data-info="${esc(n)}">${pic(n,'thumb')}<div class="x">${esc(n)}${hasLogs(n)?'<div class="muted">con historial</div>':''}</div>${custom?`<button class="ib" data-rmc="${esc(n)}">✕</button>`:''}<span class="chev">›</span></div>`;
+      return `<div class="li" data-info="${esc(n)}">${pic(n,'thumb')}<div class="x">${esc(n)}${hasLogs(n)?`<div class="muted">con historial${staleBadge(n)}</div>`:''}</div>${custom?`<button class="ib" data-rmc="${esc(n)}">✕</button>`:''}<span class="chev">›</span></div>`;
     }).join('') + `<div class="row"><input data-addg="${esc(g)}" placeholder="Nuevo ejercicio de ${esc(g)}"><button class="btn sm" data-addb="${esc(g)}">Añadir</button></div>`;
   }
   $('#v-cat').innerHTML = h + '<p class="muted" style="margin-top:20px">Fotos: free-exercise-db (dominio público).</p>';
@@ -663,12 +746,12 @@ $('#v-cat').addEventListener('click', e => {
 /* ---------- AJUSTES ---------- */
 function renderAj(){
   const ap = activePlan();
-  let h = `<h2>Plan de entreno</h2><p class="muted">Elige el plan que sigues. Al cambiar de plan no se pierde nada del historial.</p>`;
+  let h = `<h2>Plan de entreno</h2><p class="muted">Elige el plan que sigues; lo puedes cambiar cuando quieras (por ejemplo, cada mes). El historial y la evolución se mantienen, y en el calendario verás qué plan hiciste cada día.</p>`;
   h += state.plans.map(p => `<div class="plan ${p.id===ap.id?'on':''}">
       <button class="pbtn" data-plan="${esc(p.id)}">
-        <div class="pn"><span class="radio"></span>${esc(p.name)}${p.id==='mi'?'<span class="pill">PERSONALIZADO</span>':''}</div>
+        <div class="pn"><span class="radio"></span>${esc(p.name)}${p.id==='mi'||p.custom?'<span class="pill">PERSONALIZADO</span>':''}</div>
         <div class="pd">${esc(p.desc||'')}</div><div class="pdays">${p.days.map(d => `<span>${esc(d.name)}</span>`).join('')}</div></button>
-      <button class="pexp" data-exp="${esc(p.id)}">${expPlan===p.id ? 'Ocultar ejercicios ▴' : 'Ver ejercicios recomendados ▾'}</button>
+      <div class="prow"><button class="pexp" data-exp="${esc(p.id)}">${expPlan===p.id ? 'Ocultar ejercicios ▴' : (p.id==='mi'||p.custom ? 'Ver ejercicios ▾' : 'Ver ejercicios recomendados ▾')}</button>${p.custom ? `<button class="pexp pdel" data-delplan="${esc(p.id)}">Eliminar</button>` : ''}</div>
       ${expPlan===p.id ? p.days.map(d => `<div class="pday"><div class="pdn">${esc(d.name)} ${dayGroups(d).map(gtag).join('')}</div>
           ${d.ex.map((n, k) => `<div class="pex"><span class="pexi" data-info="${esc(n)}">${pic(n,'thumb')}<span>${esc(n)}</span></span>
             <button class="ib sm" data-pmv="${esc(p.id)}|${esc(d.id)}|${k}|-1" ${k===0?'disabled':''}>↑</button><button class="ib sm" data-pmv="${esc(p.id)}|${esc(d.id)}|${k}|1" ${k===d.ex.length-1?'disabled':''}>↓</button></div>`).join('')}</div>`).join('')
@@ -700,12 +783,18 @@ async function exportData(){
 $('#v-aj').addEventListener('click', e => {
   const t = e.target, ap = activePlan();
   const ex = t.closest('[data-exp]'); if (ex) { expPlan = expPlan === ex.dataset.exp ? null : ex.dataset.exp; renderAj(); return; }
+  const dp = t.closest('[data-delplan]');
+  if (dp) { const pp = state.plans.find(x => x.id === dp.dataset.delplan);
+    if (confirm(`¿Eliminar el plan «${pp.name}»?\n(El historial se conserva)`)) {
+      state.plans = state.plans.filter(x => x !== pp);
+      if (state.activePlan === pp.id) { state.activePlan = state.plans.some(x => x.id === pp.base) ? pp.base : 'mi'; selDay = suggestedDay(activePlan()); }
+      save(); render(); } return; }
   const pm = t.closest('[data-pmv]');
   if (pm) { const [pid, did, k, dd] = pm.dataset.pmv.split('|'); const d = state.plans.find(x => x.id === pid).days.find(x => x.id === did);
     const i = +k, j = i + +dd; if (j >= 0 && j < d.ex.length) { [d.ex[i], d.ex[j]] = [d.ex[j], d.ex[i]]; save(); renderAj(); } return; }
   const inf = t.closest('[data-info]'); if (inf) { openInfo(inf.dataset.info); return; }
   const pl = t.closest('[data-plan]');
-  if (pl) { state.activePlan = pl.dataset.plan; selDay = suggestedDay(activePlan()); openIdx = null; save(); render(); toast('Plan: ' + activePlan().name); return; }
+  if (pl) { state.activePlan = pl.dataset.plan; selDay = suggestedDay(activePlan()); openIdx = null; sortMode = false; save(); render(); toast('Plan: ' + activePlan().name); return; }
   const up = t.closest('[data-up]'), rm = t.closest('[data-rm]');
   if (up) { const i = +up.dataset.up; if (i > 0) { [ap.days[i-1], ap.days[i]] = [ap.days[i], ap.days[i-1]]; save(); render(); } return; }
   if (rm) { const i = +rm.dataset.rm; if (confirm(`¿Eliminar el día "${ap.days[i].name}"?\n(El historial se conserva)`)) { ap.days.splice(i,1); save(); render(); } return; }
