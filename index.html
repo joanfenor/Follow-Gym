@@ -152,7 +152,14 @@ input::placeholder{color:#5d6773}
 .pday{padding:10px 12px;border-top:1px solid var(--bd)}
 .pdn{font-weight:700;margin-bottom:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .pex{display:flex;align-items:center;gap:10px;padding:4px 0;font-size:14px;cursor:pointer}
-.pex span:nth-child(2){flex:1}
+.pexi{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.ib.sm{width:30px;height:30px;font-size:13px}
+.ib:disabled{opacity:.25}
+.dht{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.dht .t{margin-bottom:0}
+.sortb{background:var(--card2);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:7px 11px;font-size:13px;font-weight:600;flex:none}
+.sortb.on{background:var(--ok);color:#06210f;border-color:var(--ok)}
+.ex.srt .exh{padding:6px 8px}
 .pex .pic.thumb{width:44px;height:44px}
 .li[data-info]{cursor:pointer}
 .btn:disabled{opacity:.35}
@@ -165,11 +172,11 @@ input::placeholder{color:#5d6773}
 .radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--mu);flex:none}
 .plan.on .radio{border-color:var(--ac);background:radial-gradient(var(--ac) 45%,transparent 50%)}
 /* portada */
-#cover{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:24px 20px calc(24px + env(safe-area-inset-bottom));
+#cover{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 20px calc(24px + env(safe-area-inset-bottom));
   background:radial-gradient(120% 70% at 50% 0%,#3a2312 0%,#0f1216 60%);transition:opacity .35s,visibility .35s}
 #cover.hide{opacity:0;visibility:hidden}
-.cv{width:100%;max-width:420px;text-align:center}
-.cvicon{width:132px;height:132px;border-radius:30px;box-shadow:0 12px 40px rgba(255,138,61,.25);animation:pop .6s ease-out}
+.cv{width:100%;max-width:420px;text-align:center;margin:auto 0}
+.cvicon{width:120px;height:120px;border-radius:50%;border:3px solid var(--ac);object-fit:cover;box-shadow:0 12px 40px rgba(255,138,61,.25);animation:pop .6s ease-out}
 @keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
 .cv h1{font-size:32px;margin:18px 0 4px;letter-spacing:-.02em}
 .cvsub{color:var(--mu);font-size:15px}
@@ -177,6 +184,13 @@ input::placeholder{color:#5d6773}
 .cvcard .k1{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.05em}
 .cvcard .t{font-size:19px;font-weight:700;margin:2px 0 8px}
 .cvst{display:flex;gap:8px;margin-top:12px}
+.cvdone{background:#123526;border:1px solid rgba(62,207,142,.55);color:var(--ok);font-weight:700;border-radius:12px;padding:8px 10px;margin-bottom:10px}
+.cvdays{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.cvday{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--card2);border:1px solid var(--bd);color:var(--tx);border-radius:12px;padding:10px 12px;font-size:15px;font-weight:600;text-align:left}
+.cvday.on{border-color:var(--ac);background:#2b2218;box-shadow:0 0 0 1px var(--ac)}
+.cvday .dots{display:flex;gap:3px;flex:none}
+.cvday .dots i{width:14px;height:4px;border-radius:2px}
+.cv h1{margin-top:12px}
 .cvst div{flex:1;background:var(--card2);border-radius:12px;padding:8px 10px}
 .cvst b{display:block;font-size:20px}
 .cvst span{font-size:11px;color:var(--mu)}
@@ -214,7 +228,7 @@ input::placeholder{color:#5d6773}
 
 <script>
 'use strict';
-const APP_VERSION = 'v1';
+const APP_VERSION = 'v2';
 const KEY = 'entreno_pesas_v2', KEY_V1 = 'entreno_pesas_v1';
 /* Fotos: free-exercise-db (dominio público, github.com/yuhonas/free-exercise-db) */
 const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
@@ -347,7 +361,8 @@ function pic(n, cls){
 const gtag = g => `<span class="gtag" style="--gc:${gc(g)}">${esc(g)}</span>`;
 
 /* ---------- estado UI ---------- */
-let view = 'hoy', selDate = todayISO(), selDay = suggestedDay(activePlan()), openIdx = null;
+let cvPicked = false;
+let view = 'hoy', selDate = todayISO(), selDay = suggestedDay(activePlan()), openIdx = null, sortMode = false;
 let expPlan = null;
 let evoTab = 'asis', evoEx = null, calY, calM, selCal = todayISO();
 { const t = new Date(); calY = t.getFullYear(); calM = t.getMonth(); }
@@ -370,9 +385,15 @@ function renderHoy(){
   h += `<div class="chips">` + plan.days.map(d => `<button class="chip ${d.id===selDay?'on':''}" data-day="${esc(d.id)}">${esc(d.name)}${d.id===sug?'<span class="toca">TOCA</span>':''}<div class="dots">${dayGroups(d).map(g => `<i style="background:${gc(g)}"></i>`).join('')}</div></button>`).join('') + `</div>`;
   if (!day) { $('#v-hoy').innerHTML = h + `<p class="empty">Este plan no tiene días. Añádelos en Ajustes.</p>`; return; }
   const done = day.ex.filter(n => logOn(n, selDate)).length, tot = day.ex.length;
-  h += `<div class="dayhead"><div class="t">${esc(day.name)}</div><div class="gtags">${dayGroups(day).map(gtag).join('')}</div>
+  h += `<div class="dayhead"><div class="dht"><div class="t">${esc(day.name)}</div>${tot > 1 ? `<button class="sortb ${sortMode?'on':''}" id="sortBtn">${sortMode ? '✓ Hecho' : '↕ Ordenar'}</button>` : ''}</div><div class="gtags">${dayGroups(day).map(gtag).join('')}</div>
     <div class="prog"><i style="width:${tot ? done/tot*100 : 0}%"></i></div><div class="muted" style="margin-top:6px">${done} de ${tot} ejercicios apuntados</div></div>`;
   if (!tot) h += `<p class="empty">Este día no tiene ejercicios todavía.</p>`;
+  if (sortMode) {
+    h += `<p class="muted">Mueve los ejercicios con las flechas. El orden se guarda en «${esc(day.name)}» de tu plan.</p>` + day.ex.map((n, i) =>
+      `<div class="ex srt" style="--gc:${gc(groupOf(n))}"><div class="exh">${pic(n,'thumb')}<div class="exm"><div class="en">${i+1}. ${esc(n)}</div><div class="exs">${esc(groupOf(n))}</div></div>
+        <button class="ib" data-mv="${i}" data-d="-1" ${i===0?'disabled':''}>↑</button><button class="ib" data-mv="${i}" data-d="1" ${i===tot-1?'disabled':''}>↓</button></div></div>`).join('');
+    $('#v-hoy').innerHTML = h; return;
+  }
   day.ex.forEach((n, i) => {
     const g = groupOf(n), cur = logOn(n, selDate), prev = lastBefore(n, selDate), open = openIdx === i, v = cur || {};
     const fv = (o,f) => o && o[f] != null && o[f] !== '' ? esc(f==='min'||f==='max' ? fmtN(o[f]) : o[f]) : '';
@@ -427,8 +448,12 @@ $('#v-hoy').addEventListener('click', e => {
     save(); render(); return;
   }
   const chip = e.target.closest('[data-day]');
-  if (chip) { selDay = chip.dataset.day; openIdx = null; renderHoy(); return; }
+  if (chip) { selDay = chip.dataset.day; openIdx = null; sortMode = false; renderHoy(); return; }
   if (e.target.id === 'addEx') { openPicker('add'); return; }
+  if (e.target.id === 'sortBtn') { sortMode = !sortMode; openIdx = null; renderHoy(); return; }
+  const mv = e.target.closest('[data-mv]');
+  if (mv) { const day = curDay(), i = +mv.dataset.mv, j = i + +mv.dataset.d;
+    if (j >= 0 && j < day.ex.length) { [day.ex[i], day.ex[j]] = [day.ex[j], day.ex[i]]; save(); renderHoy(); } return; }
   const b = e.target.closest('[data-act]'); if (!b) return;
   const card = b.closest('.ex'), i = +card.dataset.i, day = curDay(), n = day.ex[i];
   const a = b.dataset.act;
@@ -645,10 +670,11 @@ function renderAj(){
         <div class="pd">${esc(p.desc||'')}</div><div class="pdays">${p.days.map(d => `<span>${esc(d.name)}</span>`).join('')}</div></button>
       <button class="pexp" data-exp="${esc(p.id)}">${expPlan===p.id ? 'Ocultar ejercicios ▴' : 'Ver ejercicios recomendados ▾'}</button>
       ${expPlan===p.id ? p.days.map(d => `<div class="pday"><div class="pdn">${esc(d.name)} ${dayGroups(d).map(gtag).join('')}</div>
-          ${d.ex.map(n => `<div class="pex" data-info="${esc(n)}">${pic(n,'thumb')}<span>${esc(n)}</span><span class="chev">›</span></div>`).join('')}</div>`).join('')
+          ${d.ex.map((n, k) => `<div class="pex"><span class="pexi" data-info="${esc(n)}">${pic(n,'thumb')}<span>${esc(n)}</span></span>
+            <button class="ib sm" data-pmv="${esc(p.id)}|${esc(d.id)}|${k}|-1" ${k===0?'disabled':''}>↑</button><button class="ib sm" data-pmv="${esc(p.id)}|${esc(d.id)}|${k}|1" ${k===d.ex.length-1?'disabled':''}>↓</button></div>`).join('')}</div>`).join('')
         + (p.id !== ap.id ? `<div style="padding:0 12px 12px"><button class="btn" data-plan="${esc(p.id)}">Usar este plan</button></div>` : '') : ''}
     </div>`).join('');
-  h += `<h3>Días de «${esc(ap.name)}»</h3><p class="muted">Se hacen en este orden y luego vuelve a empezar. Los ejercicios de cada día se cambian desde «Hoy».</p>`;
+  h += `<h3>Días de «${esc(ap.name)}»</h3><p class="muted">Se hacen en este orden y luego vuelve a empezar. Para cambiar u ordenar los ejercicios: «Ver ejercicios recomendados» arriba, o «↕ Ordenar» en Hoy.</p>`;
   ap.days.forEach((d,i) => {
     h += `<div class="row"><input data-rn="${i}" value="${esc(d.name)}"><button class="ib" data-up="${i}" title="Subir">↑</button><button class="ib" data-rm="${i}" title="Eliminar día">✕</button></div>
       <div class="dots" style="display:flex;gap:3px;margin:-2px 0 8px 4px">${dayGroups(d).map(g => `<i style="width:16px;height:4px;border-radius:2px;background:${gc(g)}"></i>`).join('')}<span class="muted" style="margin-left:6px;font-size:11px">${d.ex.length} ejercicios</span></div>`;
@@ -674,6 +700,9 @@ async function exportData(){
 $('#v-aj').addEventListener('click', e => {
   const t = e.target, ap = activePlan();
   const ex = t.closest('[data-exp]'); if (ex) { expPlan = expPlan === ex.dataset.exp ? null : ex.dataset.exp; renderAj(); return; }
+  const pm = t.closest('[data-pmv]');
+  if (pm) { const [pid, did, k, dd] = pm.dataset.pmv.split('|'); const d = state.plans.find(x => x.id === pid).days.find(x => x.id === did);
+    const i = +k, j = i + +dd; if (j >= 0 && j < d.ex.length) { [d.ex[i], d.ex[j]] = [d.ex[j], d.ex[i]]; save(); renderAj(); } return; }
   const inf = t.closest('[data-info]'); if (inf) { openInfo(inf.dataset.info); return; }
   const pl = t.closest('[data-plan]');
   if (pl) { state.activePlan = pl.dataset.plan; selDay = suggestedDay(activePlan()); openIdx = null; save(); render(); toast('Plan: ' + activePlan().name); return; }
@@ -722,14 +751,19 @@ function renderCover(){
   const ap = activePlan(), d = ap.days.find(x => x.id === suggestedDay(ap));
   const idx = dayIndex(), today = todayISO(), inf = idx[today];
   const pre = today.slice(0,8), month = Object.keys(idx).filter(x => x.startsWith(pre)).length;
-  $('#cvInfo').innerHTML = (inf
-      ? `<div class="k1">Hoy</div><div class="t">✓ Ya has ido${inf.logs.length ? ` · ${pl(inf.logs.length,'ejercicio','ejercicios')}` : ''}</div>${inf.groups.length ? `<div class="gtags">${inf.groups.map(gtag).join('')}</div>` : ''}`
-      : d ? `<div class="k1">Hoy toca · ${esc(ap.name)}</div><div class="t">${esc(d.name)}</div><div class="gtags">${dayGroups(d).map(gtag).join('')}</div>` : `<div class="t">Elige un plan en Ajustes</div>`)
+  if (!cvPicked) { const tl = state.logs.filter(l => l.date === today && l.plan === ap.id).sort((a,b) => b.ts - a.ts)[0]; selDay = tl ? tl.day : (d ? d.id : selDay); cvPicked = true; }
+  const sd = ap.days.find(x => x.id === selDay);
+  $('#cvInfo').innerHTML = (inf ? `<div class="cvdone">✓ Hoy ya has ido${inf.logs.length ? ` · ${pl(inf.logs.length,'ejercicio','ejercicios')}` : ''}</div>` : '')
+    + (ap.days.length ? `<div class="k1">¿Qué toca hoy? · ${esc(ap.name)}</div>
+        <div class="cvdays">${ap.days.map(x => `<button class="cvday ${x.id===selDay?'on':''}" data-cvday="${esc(x.id)}"><span>${esc(x.name)}${d && x.id===d.id ? '<span class="toca">TOCA</span>' : ''}</span><div class="dots">${dayGroups(x).map(g => `<i style="background:${gc(g)}"></i>`).join('')}</div></button>`).join('')}</div>
+        ${sd ? `<div class="gtags" style="margin-top:8px">${dayGroups(sd).map(gtag).join('')}</div>` : ''}`
+      : `<div class="t">Elige un plan en Ajustes</div>`)
     + `<div class="cvst"><div><b>${month}</b><span>días este mes</span></div><div><b>${streak(idx)}</b><span>días seguidos</span></div><div><b>${state.logs.length}</b><span>registros</span></div></div>`;
   $('#cvVer').innerHTML = `versión ${APP_VERSION}`;
 }
 renderCover();
-$('#cvGo').addEventListener('click', () => { $('#cover').classList.add('hide'); show('hoy'); });
+$('#cvInfo').addEventListener('click', e => { const b = e.target.closest('[data-cvday]'); if (b) { selDay = b.dataset.cvday; renderCover(); } });
+$('#cvGo').addEventListener('click', () => { selDate = todayISO(); openIdx = null; sortMode = false; $('#cover').classList.add('hide'); show('hoy'); window.scrollTo(0,0); });
 
 /* ---------- funcionamiento sin conexión y aviso de versión nueva ---------- */
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
