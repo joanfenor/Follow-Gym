@@ -187,6 +187,7 @@ input::placeholder{color:var(--mu);opacity:.6}
 .stalebox .sortb{margin-left:auto}
 .prow{display:flex;justify-content:space-between}
 .pdel{color:var(--danger)}
+.pacts{display:flex}
 .pex .pic.thumb{width:44px;height:44px}
 .li[data-info]{cursor:pointer}
 .btn:disabled{opacity:.35}
@@ -319,7 +320,7 @@ html[data-theme=light] .xbtn{color:var(--ac2)}
 
 <script>
 'use strict';
-const APP_VERSION = 'v7';
+const APP_VERSION = 'v8';
 const KEY = 'entreno_pesas_v2', KEY_V1 = 'entreno_pesas_v1';
 /* Fotos: free-exercise-db (dominio público, github.com/yuhonas/free-exercise-db) */
 const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
@@ -544,6 +545,17 @@ const curDay = () => activePlan().days.find(d => d.id === selDay);
 const extrasOn = date => state.dayExtra[date] || [];
 
 /* ---------- confirmaciones propias (en vez de la ventana del móvil) ---------- */
+function askText(msg, def = '', ok = 'Guardar'){
+  return new Promise(res => {
+    const el = $('#cf');
+    el.innerHTML = `<div class="cfb"><p>${esc(msg)}</p><input id="cfIn" value="${esc(def)}" style="margin:6px 0 12px">
+      <div class="cfr"><button class="btn sec" data-cf="0">Cancelar</button><button class="btn" data-cf="1">${esc(ok)}</button></div></div>`;
+    el.hidden = false; const inp = $('#cfIn'); setTimeout(() => { inp.focus(); inp.select(); }, 50);
+    const done = v => { el.hidden = true; el.onclick = null; res(v); };
+    inp.onkeydown = e => { if (e.key === 'Enter') done(inp.value.trim() || null); };
+    el.onclick = e => { const b = e.target.closest('[data-cf]'); if (b || e.target === el) done(b && b.dataset.cf === '1' ? (inp.value.trim() || null) : null); };
+  });
+}
 function ask(msg, ok = 'Aceptar', danger = false){
   return new Promise(res => {
     const el = $('#cf');
@@ -575,10 +587,10 @@ function exCard(n, isX){
       <div class="inp">
         <label>Mín kg<input inputmode="decimal" data-f="min" value="${fv(v,'min')}" placeholder="${fv(prev,'min')}"></label>
         <label>Máx kg<input inputmode="decimal" data-f="max" value="${fv(v,'max')}" placeholder="${fv(prev,'max')}"></label>
-        <label>Series<input inputmode="numeric" pattern="[0-9]*" data-f="sets" value="${fv(v,'sets')}" placeholder="${fv(prev,'sets')}"></label>
-        <label>Reps<input inputmode="numeric" pattern="[0-9]*" data-f="reps" value="${fv(v,'reps')}" placeholder="${fv(prev,'reps')}"></label>
+        <label>Series<input inputmode="numeric" pattern="[0-9]*" data-f="sets" value="${fv(v,'sets')}" placeholder="${fv(prev,'sets') || '4'}"></label>
+        <label>Reps<input inputmode="numeric" pattern="[0-9]*" data-f="reps" value="${fv(v,'reps')}" placeholder="${fv(prev,'reps') || '10'}"></label>
       </div>
-      <div class="muted" style="margin-top:6px">Si dejas un campo vacío, se guarda lo de la última vez. Sin peso (p. ej. abdominales) también se puede guardar.</div>
+      <div class="muted" style="margin-top:6px">Si dejas un campo vacío, se guarda lo de la última vez (o 4×10 si es la primera). Sin peso (p. ej. abdominales) también se puede guardar.</div>
       <div class="exact"><button class="btn" data-act="save">${cur ? 'Actualizar' : 'Guardar'}</button>
         <button class="ib" data-act="swap" title="Cambiar ejercicio">⇄</button>
         <button class="ib" data-act="${isX ? 'delx' : 'del'}" title="${isX ? 'Quitar de hoy' : 'Quitar del plan'}">⊖</button>
@@ -645,10 +657,8 @@ function saveCard(card, n){
   unskip(n, selDate); save();
   const prev = lastBefore(n, selDate);
   toast(prev && mx != null && prev.max != null && mx > prev.max ? `Guardado · +${fmtN(mx - prev.max)} kg respecto a la última vez 💪` : 'Guardado ✓');
-  const order = hoySections(curDay()).flatMap(s => [...s.items, ...s.extra]), i = order.indexOf(n);
-  openName = order.find((x, k) => k > i && !logOn(x, selDate) && !isSkip(x, selDate)) || null;
+  openName = null;   // se cierra; no se abre el siguiente
   render();
-  if (openName) setTimeout(() => { const el = [...document.querySelectorAll('#v-hoy .ex')].find(x => x.dataset.n === openName); if (el) el.scrollIntoView({ behavior:'smooth', block:'start' }); }, 50);
 }
 
 let suppressClick = false;
@@ -1006,18 +1016,19 @@ $('#v-cat').addEventListener('click', async e => {
 /* ---------- AJUSTES ---------- */
 function renderAj(){
   const ap = activePlan(), th = state.theme || 'dark';
-  let h = `<h2>Apariencia</h2><div class="seg">${[['dark','🌙 Oscuro'],['light','☀️ Claro'],['auto','📱 Automático']].map(([k,l]) => `<button data-theme="${k}" class="${th===k?'on':''}">${l}</button>`).join('')}</div>`;
-  h += `<h2 style="margin-top:22px">Plan de entreno</h2><p class="muted">Elige el plan que sigues; lo puedes cambiar cuando quieras (por ejemplo, cada mes). El historial y la evolución se mantienen, y en el calendario verás qué plan hiciste cada día.</p>`;
+  let h = `<h2>Apariencia</h2><div class="seg">${[['dark','🌙 Oscuro'],['light','☀️ Claro'],['auto','📱 Automático']].map(([k,l]) => `<button data-thm="${k}" class="${th===k?'on':''}">${l}</button>`).join('')}</div>`;
+  h += `<h2 style="margin-top:22px">Plan de entreno</h2><p class="muted">Elige el plan que sigues; lo puedes cambiar cuando quieras. Para crear un plan tuyo, pulsa <b>⧉ Duplicar</b> en cualquiera y ponle nombre: puedes tener todos los que quieras. El historial se mantiene siempre.</p>`;
   h += state.plans.map(p => `<div class="plan ${p.id===ap.id?'on':''}">
       <button class="pbtn" data-plan="${esc(p.id)}">
         <div class="pn"><span class="radio"></span>${esc(p.name)}${p.id==='mi'||p.custom?'<span class="pill">PERSONALIZADO</span>':''}</div>
         <div class="pd">${esc(p.desc||'')}</div><div class="pdays">${p.days.map(d => `<span>${esc(d.name)}</span>`).join('')}</div></button>
-      <div class="prow"><button class="pexp" data-exp="${esc(p.id)}">${expPlan===p.id ? 'Ocultar ejercicios ▴' : (p.id==='mi'||p.custom ? 'Ver ejercicios ▾' : 'Ver ejercicios recomendados ▾')}</button>${p.custom ? `<button class="pexp pdel" data-delplan="${esc(p.id)}">Eliminar</button>` : ''}</div>
+      <div class="prow"><button class="pexp" data-exp="${esc(p.id)}">${expPlan===p.id ? 'Ocultar ejercicios ▴' : (p.id==='mi'||p.custom ? 'Ver ejercicios ▾' : 'Ver ejercicios recomendados ▾')}</button><span class="pacts"><button class="pexp" data-dup="${esc(p.id)}">⧉ Duplicar</button>${p.custom ? `<button class="pexp pdel" data-delplan="${esc(p.id)}">Eliminar</button>` : ''}</span></div>
       ${expPlan===p.id ? p.days.map(d => `<div class="pday"><div class="pdn">${esc(d.name)} ${dayGroups(d).map(gtag).join('')}</div>
           ${d.ex.map((n, k) => `<div class="pex"><span class="pexi" data-info="${esc(n)}">${pic(n,'thumb')}<span>${esc(n)}</span></span>
             <button class="ib sm" data-pmv="${esc(p.id)}|${esc(d.id)}|${k}|-1" ${k===0?'disabled':''}>↑</button><button class="ib sm" data-pmv="${esc(p.id)}|${esc(d.id)}|${k}|1" ${k===d.ex.length-1?'disabled':''}>↓</button></div>`).join('')}</div>`).join('')
         + (p.id !== ap.id ? `<div style="padding:0 12px 12px"><button class="btn" data-plan="${esc(p.id)}">Usar este plan</button></div>` : '') : ''}
     </div>`).join('');
+  if (ap.custom || ap.id === 'mi') h += `<h3>Nombre del plan</h3><input id="planName" value="${esc(ap.name)}">`;
   h += `<h3>Días de «${esc(ap.name)}»</h3><p class="muted">Se hacen en este orden y luego vuelve a empezar. Para ordenar ejercicios o grupos: mantén pulsado y arrastra en «Hoy».</p>`;
   ap.days.forEach((d,i) => {
     h += `<div class="row"><input data-rn="${i}" value="${esc(d.name)}"><button class="ib" data-up="${i}" title="Subir">↑</button><button class="ib" data-rm="${i}" title="Eliminar día">✕</button></div>
@@ -1046,8 +1057,16 @@ async function exportData(){
 }
 $('#v-aj').addEventListener('click', async e => {
   const t = e.target, ap = activePlan();
-  const th = t.closest('[data-theme]'); if (th) { state.theme = th.dataset.theme; save(); applyTheme(); renderAj(); return; }
+  const th = t.closest('[data-thm]'); if (th) { state.theme = th.dataset.thm; save(); applyTheme(); renderAj(); return; }
   const ex = t.closest('[data-exp]'); if (ex) { expPlan = expPlan === ex.dataset.exp ? null : ex.dataset.exp; renderAj(); return; }
+  const du = t.closest('[data-dup]');
+  if (du) { const src = state.plans.find(x => x.id === du.dataset.dup);
+    const name = await askText(`Nombre del nuevo plan personalizado (copia de «${src.name}»):`, `${src.name} (mío)`, 'Crear');
+    if (!name) return;
+    if (state.plans.some(x => x.name.toLowerCase() === name.toLowerCase())) { toast('Ya hay un plan con ese nombre'); return; }
+    const c = clone(src); Object.assign(c, { id:'c' + uid(), base:src.base || src.id, custom:true, name, desc:`Personalizado · copia de «${src.name}»` });
+    state.plans.splice(state.plans.indexOf(src) + 1, 0, c); state.activePlan = c.id; selDay = suggestedDay(c); expPlan = null;
+    save(); render(); toast(`Creado «${name}» y puesto como plan activo`); return; }
   const dp = t.closest('[data-delplan]');
   if (dp) { const pp = state.plans.find(x => x.id === dp.dataset.delplan);
     if (await ask(`¿Eliminar el plan «${pp.name}»?\nEl historial se conserva.`, 'Eliminar', true)) {
@@ -1076,6 +1095,7 @@ $('#v-aj').addEventListener('click', async e => {
 });
 $('#v-aj').addEventListener('change', e => {
   const t = e.target;
+  if (t.id === 'planName') { const v = t.value.trim(); if (v) { activePlan().name = v; save(); render(); toast('Nombre guardado'); } return; }
   if (t.dataset.rn != null) { activePlan().days[+t.dataset.rn].name = t.value.trim() || 'Día'; save(); render(); return; }
   if (t.id === 'imp' && t.files[0]) {
     const r = new FileReader();
