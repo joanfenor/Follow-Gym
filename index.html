@@ -188,6 +188,9 @@ input::placeholder{color:var(--mu);opacity:.6}
 .prow{display:flex;justify-content:space-between}
 .pdel{color:var(--danger)}
 .pacts{display:flex}
+.curplan{background:var(--sel);border:1px solid var(--ac);border-radius:14px;padding:12px}
+.curplan .pn{font-weight:700;display:flex;align-items:center;gap:8px;font-size:16px}
+.curplan .pd{font-size:13px;color:var(--mu);margin-top:2px}
 .pex .pic.thumb{width:44px;height:44px}
 .li[data-info]{cursor:pointer}
 .btn:disabled{opacity:.35}
@@ -244,6 +247,8 @@ input::placeholder{color:var(--mu);opacity:.6}
 .tb.cancel{color:var(--tx);height:36px;padding:0 12px}
 .gitems .ex{margin:6px 0}
 .ex{transition:transform .15s ease;position:relative}
+.ex.flash{animation:flash 1.2s ease}
+@keyframes flash{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 0%,transparent);background:var(--card)}25%{box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 55%,transparent);background:color-mix(in srgb,var(--ok) 18%,var(--card))}100%{box-shadow:0 0 0 0 transparent;background:var(--card)}}
 .ex.dragging{transition:none;z-index:10;box-shadow:0 10px 30px var(--shadow);border-color:var(--ac)}
 .exh{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .pic img{-webkit-user-drag:none;user-select:none;pointer-events:none}
@@ -320,7 +325,7 @@ html[data-theme=light] .xbtn{color:var(--ac2)}
 
 <script>
 'use strict';
-const APP_VERSION = 'v8';
+const APP_VERSION = 'v9';
 const KEY = 'entreno_pesas_v2', KEY_V1 = 'entreno_pesas_v1';
 /* Fotos: free-exercise-db (dominio público, github.com/yuhonas/free-exercise-db) */
 const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
@@ -605,7 +610,8 @@ function groupHead(s){
   if (isToday) {
     tm = `<span class="gtime ${run ? 'run' : t && t.done ? 'fin' : ''}" ${run ? `data-tlive="${selDate}|${esc(s.g)}"` : ''}>${t ? (t.done && !run ? '✓ ' + durMin(ms/60000) : clock(ms)) : ''}</span>
       ${run ? `<button class="tb" data-act="tpause" data-g="${esc(s.g)}" title="Pausa">⏸</button>` : `<button class="tb play" data-act="tstart" data-g="${esc(s.g)}" title="${t ? 'Seguir' : 'Iniciar'}">▶</button>`}
-      ${t && !t.done ? `<button class="tb" data-act="tfin" data-g="${esc(s.g)}" title="Finalizar">■</button>` : ''}`;
+      ${t && !t.done ? `<button class="tb" data-act="tfin" data-g="${esc(s.g)}" title="Finalizar">■</button>` : ''}
+      ${t && !run ? `<button class="tb" data-act="treset" data-g="${esc(s.g)}" title="Borrar el tiempo">🗑</button>` : ''}`;
   } else if (ms) tm = `<span class="gtime fin">⏱ ${durMin(ms/60000)}</span>`;
   return `<div class="gh" style="--gc:${gc(s.g)}" ${s.plan ? 'data-gdrag="1"' : ''}>
     <span class="gname">${esc(s.g)}</span><span class="gcnt">${done}/${all.length}</span>
@@ -659,6 +665,8 @@ function saveCard(card, n){
   toast(prev && mx != null && prev.max != null && mx > prev.max ? `Guardado · +${fmtN(mx - prev.max)} kg respecto a la última vez 💪` : 'Guardado ✓');
   openName = null;   // se cierra; no se abre el siguiente
   render();
+  const el = [...document.querySelectorAll('#v-hoy .ex')].find(x => x.dataset.n === n);
+  if (el) { el.scrollIntoView({ block:'nearest' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1300); }
 }
 
 let suppressClick = false;
@@ -677,8 +685,9 @@ $('#v-hoy').addEventListener('click', async e => {
   const ar = e.target.closest('[data-actlog]'); if (ar) { const a = state.actLogs.find(x => x.id === ar.dataset.actlog); if (a) openActForm(a.a, a); return; }
   const b = e.target.closest('[data-act]'); if (!b) return;
   const a = b.dataset.act, g = b.dataset.g;
-  if (a === 'tstart') { tStart(selDate, g); save(); renderHoy(); return; }
+  if (a === 'tstart') { tStart(selDate, g); state.runDay = { date:selDate, plan:state.activePlan, day:selDay }; save(); renderHoy(); return; }
   if (a === 'tpause') { tPause(selDate, g); save(); renderHoy(); return; }
+  if (a === 'treset') { if (await ask(`¿Borrar el tiempo de ${g} de este día?`, 'Borrar', true)) { delete state.timers[selDate][g]; if (!Object.keys(state.timers[selDate]).length) delete state.timers[selDate]; save(); renderHoy(); } return; }
   if (a === 'tfin') { tFinish(selDate, g); save(); renderHoy(); toast(`${g}: ${durMin(tMs(tGet(selDate, g))/60000)}`); return; }
   if (a === 'gadd') { const inPlan = planGroupOrder(curDay()).includes(g); openPicker({ mode: inPlan ? 'add' : 'addx', group:g }); return; }
   const card = b.closest('.ex'); if (!card) return;
@@ -1017,7 +1026,16 @@ $('#v-cat').addEventListener('click', async e => {
 function renderAj(){
   const ap = activePlan(), th = state.theme || 'dark';
   let h = `<h2>Apariencia</h2><div class="seg">${[['dark','🌙 Oscuro'],['light','☀️ Claro'],['auto','📱 Automático']].map(([k,l]) => `<button data-thm="${k}" class="${th===k?'on':''}">${l}</button>`).join('')}</div>`;
-  h += `<h2 style="margin-top:22px">Plan de entreno</h2><p class="muted">Elige el plan que sigues; lo puedes cambiar cuando quieras. Para crear un plan tuyo, pulsa <b>⧉ Duplicar</b> en cualquiera y ponle nombre: puedes tener todos los que quieras. El historial se mantiene siempre.</p>`;
+  h += `<h2 style="margin-top:22px">Plan actual</h2><div class="curplan"><div class="pn">${esc(ap.name)}${ap.id==='mi'||ap.custom?'<span class="pill">PERSONALIZADO</span>':''}</div><div class="pd">${esc(ap.desc||'')}</div></div>`;
+  if (ap.custom || ap.id === 'mi') h += `<h3>Nombre del plan</h3><input id="planName" value="${esc(ap.name)}">`;
+  h += `<h3>Días de «${esc(ap.name)}»</h3><p class="muted">Se hacen en este orden y luego vuelve a empezar. Para ordenar ejercicios o grupos: mantén pulsado y arrastra en «Hoy».</p>`;
+  ap.days.forEach((d,i) => {
+    h += `<div class="row"><input data-rn="${i}" value="${esc(d.name)}"><button class="ib" data-up="${i}" title="Subir">↑</button><button class="ib" data-rm="${i}" title="Eliminar día">✕</button></div>
+      <div class="dots" style="display:flex;gap:3px;margin:-2px 0 8px 4px">${dayGroups(d).map(g => `<i style="width:16px;height:4px;border-radius:2px;background:${gc(g)}"></i>`).join('')}<span class="muted" style="margin-left:6px;font-size:11px">${d.ex.length} ejercicios</span></div>`;
+  });
+  h += `<button class="btn ghost" id="addDay">+ Añadir día</button>`;
+  if (TPL.some(t => t.id === ap.id)) h += `<button class="btn sec" id="resetPlan">Restaurar «${esc(ap.name)}» a como venía</button>`;
+  h += `<h2 style="margin-top:28px">Planes de entreno</h2><p class="muted">Elige el plan que sigues; lo puedes cambiar cuando quieras. Para crear un plan tuyo, pulsa <b>⧉ Duplicar</b> en cualquiera y ponle nombre: puedes tener todos los que quieras. El historial se mantiene siempre.</p>`;
   h += state.plans.map(p => `<div class="plan ${p.id===ap.id?'on':''}">
       <button class="pbtn" data-plan="${esc(p.id)}">
         <div class="pn"><span class="radio"></span>${esc(p.name)}${p.id==='mi'||p.custom?'<span class="pill">PERSONALIZADO</span>':''}</div>
@@ -1028,14 +1046,6 @@ function renderAj(){
             <button class="ib sm" data-pmv="${esc(p.id)}|${esc(d.id)}|${k}|-1" ${k===0?'disabled':''}>↑</button><button class="ib sm" data-pmv="${esc(p.id)}|${esc(d.id)}|${k}|1" ${k===d.ex.length-1?'disabled':''}>↓</button></div>`).join('')}</div>`).join('')
         + (p.id !== ap.id ? `<div style="padding:0 12px 12px"><button class="btn" data-plan="${esc(p.id)}">Usar este plan</button></div>` : '') : ''}
     </div>`).join('');
-  if (ap.custom || ap.id === 'mi') h += `<h3>Nombre del plan</h3><input id="planName" value="${esc(ap.name)}">`;
-  h += `<h3>Días de «${esc(ap.name)}»</h3><p class="muted">Se hacen en este orden y luego vuelve a empezar. Para ordenar ejercicios o grupos: mantén pulsado y arrastra en «Hoy».</p>`;
-  ap.days.forEach((d,i) => {
-    h += `<div class="row"><input data-rn="${i}" value="${esc(d.name)}"><button class="ib" data-up="${i}" title="Subir">↑</button><button class="ib" data-rm="${i}" title="Eliminar día">✕</button></div>
-      <div class="dots" style="display:flex;gap:3px;margin:-2px 0 8px 4px">${dayGroups(d).map(g => `<i style="width:16px;height:4px;border-radius:2px;background:${gc(g)}"></i>`).join('')}<span class="muted" style="margin-left:6px;font-size:11px">${d.ex.length} ejercicios</span></div>`;
-  });
-  h += `<button class="btn ghost" id="addDay">+ Añadir día</button>`;
-  if (TPL.some(t => t.id === ap.id)) h += `<button class="btn sec" id="resetPlan">Restaurar «${esc(ap.name)}» a como venía</button>`;
   h += `<h2 style="margin-top:28px">Actividades extra</h2><p class="muted">Disponibles con cualquier plan desde «＋ Extra de hoy». Solo se guarda el tiempo.</p>`
     + state.acts.map(A => `<div class="actrow" style="--gc:${A.c}"><span class="aico">${A.ico}</span><span class="an">${esc(A.n)}</span><button class="ib" data-rmact="${esc(A.id)}">✕</button></div>`).join('')
     + `<div class="row"><input id="newActIco" placeholder="🚴" style="width:64px;flex:none;text-align:center"><input id="newActN" placeholder="Nueva actividad (p. ej. Bici)"><button class="btn sm" id="newActBtn">Añadir</button></div>`;
@@ -1143,6 +1153,15 @@ function renderCover(){
   $('#cvVer').innerHTML = `versión ${APP_VERSION}`;
 }
 renderCover();
+{ // si hay un cronómetro en marcha hoy, se entra directo al entreno
+  const T = state.timers[todayISO()] || {};
+  if (Object.values(T).some(tRun)) {
+    const tl = state.logs.filter(l => l.date === todayISO() && l.plan === state.activePlan).sort((a,b) => b.ts - a.ts)[0];
+    if (tl) selDay = tl.day;
+    if (state.runDay && state.runDay.date === todayISO() && state.runDay.plan === state.activePlan) selDay = state.runDay.day;
+    $('#cover').classList.add('hide'); show('hoy');
+  }
+}
 $('#cvInfo').addEventListener('click', e => { const b = e.target.closest('[data-cvday]'); if (b) { selDay = b.dataset.cvday; renderCover(); } });
 $('#cvGo').addEventListener('click', () => { selDate = todayISO(); openName = null; $('#cover').classList.add('hide'); show('hoy'); window.scrollTo(0,0); });
 
