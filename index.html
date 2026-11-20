@@ -265,6 +265,8 @@ html[data-theme=light] .xbtn{color:var(--ac2)}
 .actb{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 6px;border-radius:14px;border:1px solid color-mix(in srgb,var(--gc) 45%,var(--bd));background:color-mix(in srgb,var(--gc) 12%,var(--card));color:var(--tx);font-weight:600;font-size:14px}
 .actb .aico{font-size:30px;width:auto}
 .actb small{color:var(--mu);font-weight:500}
+.inp.t2{grid-template-columns:1fr 1fr}
+.subh{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gc);padding:10px 10px 4px;border-top:1px solid var(--bd)}
 .hm{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
 .hm label{font-size:12px;color:var(--mu);display:flex;flex-direction:column;gap:4px}
 .hm input{font-size:24px;text-align:center;padding:12px}
@@ -277,6 +279,9 @@ html[data-theme=light] .xbtn{color:var(--ac2)}
 .cfr{display:flex;gap:10px}
 .cfr .btn{flex:1}
 .sessline{font-size:14px;margin:4px 0 8px}
+.dth{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.dth .t{margin-bottom:0}
+.gh.dg{margin:10px 0 2px;padding:6px 10px}
 .cacts{font-size:9px;line-height:1;text-align:center}
 .pg{background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--gc);border-radius:14px;margin:8px 0;overflow:hidden}
 .pgh{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;color:var(--tx);padding:12px;text-align:left;font-size:15px}
@@ -325,17 +330,26 @@ html[data-theme=light] .xbtn{color:var(--ac2)}
 
 <script>
 'use strict';
-const APP_VERSION = 'v9';
+const APP_VERSION = 'v10';
 const KEY = 'entreno_pesas_v2', KEY_V1 = 'entreno_pesas_v1';
 /* Fotos: free-exercise-db (dominio público, github.com/yuhonas/free-exercise-db) */
 const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
 const GROUPS = ['Pecho','Tríceps','Espalda','Bíceps','Hombros','Piernas','Abdominales'];
 const GC = {'Pecho':'#ff6b6b','Tríceps':'#cc5de8','Espalda':'#4dabf7','Bíceps':'#20c997','Hombros':'#ff922b','Piernas':'#fcc419','Abdominales':'#94d82d'};
-const EX = [["Press banca", "Pecho", "Barbell_Bench_Press_-_Medium_Grip"], ["Press inclinado con mancuernas", "Pecho", "Incline_Dumbbell_Press"], ["Press inclinado con barra", "Pecho", "Barbell_Incline_Bench_Press_-_Medium_Grip"], ["Press declinado", "Pecho", "Decline_Barbell_Bench_Press"], ["Press en máquina", "Pecho", "Machine_Bench_Press"], ["Aperturas en polea alta (al centro)", "Pecho", "Cable_Crossover"], ["Aperturas en polea baja (al centro)", "Pecho", "Low_Cable_Crossover"], ["Aperturas en banco inclinado con polea", "Pecho", "Incline_Cable_Flye"], ["Aperturas inclinadas con mancuernas", "Pecho", "Incline_Dumbbell_Flyes"], ["Aperturas con mancuernas", "Pecho", "Dumbbell_Flyes"], ["Pec deck", "Pecho", "Butterfly"], ["Fondos en paralelas", "Pecho", "Dips_-_Chest_Version"], ["Press plano con mancuernas", "Pecho", "Dumbbell_Bench_Press"], ["Press declinado con mancuernas", "Pecho", "Decline_Dumbbell_Bench_Press"], ["Press en multipower", "Pecho", "Smith_Machine_Bench_Press"], ["Press inclinado en polea", "Pecho", "Incline_Cable_Chest_Press"], ["Flexiones", "Pecho", "Pushups"], ["Svend press", "Pecho", "Svend_Press"], ["Extensión en polea (cuerda)", "Tríceps", "Triceps_Pushdown_-_Rope_Attachment"], ["Extensión en polea (barra)", "Tríceps", "Triceps_Pushdown"], ["Press francés", "Tríceps", "EZ-Bar_Skullcrusher"], ["Extensión sobre la cabeza con mancuerna", "Tríceps", "Standing_Dumbbell_Triceps_Extension"], ["Patada de tríceps", "Tríceps", "Tricep_Dumbbell_Kickback"], ["Press banca agarre cerrado", "Tríceps", "Close-Grip_Barbell_Bench_Press"], ["Fondos entre bancos", "Tríceps", "Bench_Dips"], ["Press katana (polea sobre la cabeza)", "Tríceps", "Cable_Rope_Overhead_Triceps_Extension"], ["Extensión en polea a una mano", "Tríceps", "Cable_One_Arm_Tricep_Extension"], ["Extensión en polea agarre supino", "Tríceps", "Reverse_Grip_Triceps_Pushdown"], ["Extensión de rodillas en polea", "Tríceps", "Kneeling_Cable_Triceps_Extension"], ["Press Tate", "Tríceps", "Tate_Press"], ["JM press", "Tríceps", "JM_Press"], ["Dominadas", "Espalda", "Pullups"], ["Jalón al pecho", "Espalda", "Wide-Grip_Lat_Pulldown"], ["Remo con barra", "Espalda", "Bent_Over_Barbell_Row"], ["Remo con mancuerna", "Espalda", "One-Arm_Dumbbell_Row"], ["Remo en polea baja", "Espalda", "Seated_Cable_Rows"], ["Remo en máquina", "Espalda", "Leverage_Iso_Row"], ["Pullover en polea", "Espalda", "Straight-Arm_Pulldown"], ["Peso muerto", "Espalda", "Barbell_Deadlift"], ["Jalón con triángulo (agarre estrecho)", "Espalda", "V-Bar_Pulldown"], ["Jalón supino", "Espalda", "Underhand_Cable_Pulldowns"], ["Jalón a una mano", "Espalda", "One_Arm_Lat_Pulldown"], ["Remo en T", "Espalda", "T-Bar_Row_with_Handle"], ["Remo a una mano en polea", "Espalda", "Shotgun_Row"], ["Remo invertido", "Espalda", "Inverted_Row"], ["Hiperextensiones (lumbar)", "Espalda", "Hyperextensions_Back_Extensions"], ["Rack pull", "Espalda", "Rack_Pulls"], ["Curl con barra", "Bíceps", "Barbell_Curl"], ["Curl con barra Z", "Bíceps", "EZ-Bar_Curl"], ["Curl martillo", "Bíceps", "Hammer_Curls"], ["Curl alterno con mancuernas", "Bíceps", "Dumbbell_Alternate_Bicep_Curl"], ["Curl en banco Scott", "Bíceps", "Preacher_Curl"], ["Curl en polea", "Bíceps", "Standing_Biceps_Cable_Curl"], ["Curl concentrado", "Bíceps", "Concentration_Curls"], ["Curl inclinado con mancuernas", "Bíceps", "Incline_Dumbbell_Curl"], ["Curl araña", "Bíceps", "Spider_Curl"], ["Curl invertido con barra", "Bíceps", "Reverse_Barbell_Curl"], ["Curl arrastre (drag curl)", "Bíceps", "Drag_Curl"], ["Curl martillo en polea (cuerda)", "Bíceps", "Cable_Hammer_Curls_-_Rope_Attachment"], ["Curl en polea alta", "Bíceps", "High_Cable_Curls"], ["Curl Zottman", "Bíceps", "Zottman_Curl"], ["Curl en máquina", "Bíceps", "Machine_Bicep_Curl"], ["Press militar con barra", "Hombros", "Standing_Military_Press"], ["Press con mancuernas sentado", "Hombros", "Seated_Dumbbell_Press"], ["Press en máquina (hombro)", "Hombros", "Leverage_Shoulder_Press"], ["Elevaciones laterales", "Hombros", "Side_Lateral_Raise"], ["Elevaciones laterales en polea", "Hombros", "Cable_Seated_Lateral_Raise"], ["Elevaciones frontales", "Hombros", "Front_Dumbbell_Raise"], ["Pájaros (deltoides posterior)", "Hombros", "Reverse_Flyes"], ["Face pull", "Hombros", "Face_Pull"], ["Remo al mentón", "Hombros", "Standing_Dumbbell_Upright_Row"], ["Press Arnold", "Hombros", "Arnold_Dumbbell_Press"], ["Elevación lateral a una mano", "Hombros", "One-Arm_Side_Laterals"], ["Pájaros en polea", "Hombros", "Cable_Rear_Delt_Fly"], ["Encogimientos con barra", "Hombros", "Barbell_Shrug"], ["Encogimientos con mancuernas", "Hombros", "Dumbbell_Shrug"], ["Encogimientos en polea", "Hombros", "Cable_Shrugs"], ["Encogimientos en máquina", "Hombros", "Leverage_Shrug"], ["Paseo del granjero", "Hombros", "Farmers_Walk"], ["Sentadilla", "Piernas", "Barbell_Squat"], ["Prensa", "Piernas", "Leg_Press"], ["Peso muerto rumano", "Piernas", "Romanian_Deadlift"], ["Zancadas", "Piernas", "Dumbbell_Lunges"], ["Sentadilla búlgara", "Piernas", "Split_Squat_with_Dumbbells"], ["Extensión de cuádriceps", "Piernas", "Leg_Extensions"], ["Curl femoral", "Piernas", "Lying_Leg_Curls"], ["Hip thrust", "Piernas", "Barbell_Hip_Thrust"], ["Gemelos de pie", "Piernas", "Standing_Calf_Raises"], ["Gemelos sentado", "Piernas", "Seated_Calf_Raise"], ["Sentadilla hack", "Piernas", "Hack_Squat"], ["Sentadilla frontal", "Piernas", "Front_Barbell_Squat"], ["Sentadilla goblet", "Piernas", "Goblet_Squat"], ["Sentadilla en multipower", "Piernas", "Smith_Machine_Squat"], ["Zancadas caminando", "Piernas", "Barbell_Walking_Lunge"], ["Peso muerto piernas rígidas", "Piernas", "Stiff-Legged_Barbell_Deadlift"], ["Peso muerto sumo", "Piernas", "Sumo_Deadlift"], ["Curl femoral sentado", "Piernas", "Seated_Leg_Curl"], ["Patada de glúteo", "Piernas", "Glute_Kickback"], ["Puente de glúteo a una pierna", "Piernas", "Single_Leg_Glute_Bridge"], ["Aductores en máquina", "Piernas", "Thigh_Adductor"], ["Abductores en máquina", "Piernas", "Thigh_Abductor"], ["Gemelos en prensa", "Piernas", "Calf_Press_On_The_Leg_Press_Machine"], ["Pack Abdominales", "Abdominales", null], ["Crunch en máquina", "Abdominales", "Ab_Crunch_Machine"]]; // [nombre, grupo, id de foto]
+const EX = [["Press banca", "Pecho", "Barbell_Bench_Press_-_Medium_Grip"], ["Press inclinado con mancuernas", "Pecho", "Incline_Dumbbell_Press"], ["Press inclinado con barra", "Pecho", "Barbell_Incline_Bench_Press_-_Medium_Grip"], ["Press declinado", "Pecho", "Decline_Barbell_Bench_Press"], ["Press en máquina", "Pecho", "Machine_Bench_Press"], ["Aperturas en polea alta (al centro)", "Pecho", "Cable_Crossover"], ["Aperturas en polea baja (al centro)", "Pecho", "Low_Cable_Crossover"], ["Aperturas en banco inclinado con polea", "Pecho", "Incline_Cable_Flye"], ["Aperturas inclinadas con mancuernas", "Pecho", "Incline_Dumbbell_Flyes"], ["Aperturas con mancuernas", "Pecho", "Dumbbell_Flyes"], ["Pec deck", "Pecho", "Butterfly"], ["Fondos en paralelas", "Pecho", "Dips_-_Chest_Version"], ["Press plano con mancuernas", "Pecho", "Dumbbell_Bench_Press"], ["Press declinado con mancuernas", "Pecho", "Decline_Dumbbell_Bench_Press"], ["Press en multipower", "Pecho", "Smith_Machine_Bench_Press"], ["Press inclinado en polea", "Pecho", "Incline_Cable_Chest_Press"], ["Flexiones", "Pecho", "Pushups"], ["Svend press", "Pecho", "Svend_Press"], ["Extensión en polea (cuerda)", "Tríceps", "Triceps_Pushdown_-_Rope_Attachment"], ["Extensión en polea (barra)", "Tríceps", "Triceps_Pushdown"], ["Press francés", "Tríceps", "EZ-Bar_Skullcrusher"], ["Extensión sobre la cabeza con mancuerna", "Tríceps", "Standing_Dumbbell_Triceps_Extension"], ["Patada de tríceps", "Tríceps", "Tricep_Dumbbell_Kickback"], ["Press banca agarre cerrado", "Tríceps", "Close-Grip_Barbell_Bench_Press"], ["Fondos entre bancos", "Tríceps", "Bench_Dips"], ["Press katana (polea sobre la cabeza)", "Tríceps", "Cable_Rope_Overhead_Triceps_Extension"], ["Extensión en polea a una mano", "Tríceps", "Cable_One_Arm_Tricep_Extension"], ["Extensión en polea agarre supino", "Tríceps", "Reverse_Grip_Triceps_Pushdown"], ["Extensión de rodillas en polea", "Tríceps", "Kneeling_Cable_Triceps_Extension"], ["Press Tate", "Tríceps", "Tate_Press"], ["JM press", "Tríceps", "JM_Press"], ["Dominadas", "Espalda", "Pullups"], ["Jalón al pecho", "Espalda", "Wide-Grip_Lat_Pulldown"], ["Remo con barra", "Espalda", "Bent_Over_Barbell_Row"], ["Remo con mancuerna", "Espalda", "One-Arm_Dumbbell_Row"], ["Remo en polea baja", "Espalda", "Seated_Cable_Rows"], ["Remo en máquina", "Espalda", "Leverage_Iso_Row"], ["Pullover en polea", "Espalda", "Straight-Arm_Pulldown"], ["Peso muerto", "Espalda", "Barbell_Deadlift"], ["Jalón con triángulo (agarre estrecho)", "Espalda", "V-Bar_Pulldown"], ["Jalón supino", "Espalda", "Underhand_Cable_Pulldowns"], ["Jalón a una mano", "Espalda", "One_Arm_Lat_Pulldown"], ["Remo en T", "Espalda", "T-Bar_Row_with_Handle"], ["Remo a una mano en polea", "Espalda", "Shotgun_Row"], ["Remo invertido", "Espalda", "Inverted_Row"], ["Hiperextensiones (lumbar)", "Espalda", "Hyperextensions_Back_Extensions"], ["Rack pull", "Espalda", "Rack_Pulls"], ["Curl con barra", "Bíceps", "Barbell_Curl"], ["Curl con barra Z", "Bíceps", "EZ-Bar_Curl"], ["Curl martillo", "Bíceps", "Hammer_Curls"], ["Curl alterno con mancuernas", "Bíceps", "Dumbbell_Alternate_Bicep_Curl"], ["Curl en banco Scott", "Bíceps", "Preacher_Curl"], ["Curl en polea", "Bíceps", "Standing_Biceps_Cable_Curl"], ["Curl concentrado", "Bíceps", "Concentration_Curls"], ["Curl inclinado con mancuernas", "Bíceps", "Incline_Dumbbell_Curl"], ["Curl araña", "Bíceps", "Spider_Curl"], ["Curl invertido con barra", "Bíceps", "Reverse_Barbell_Curl"], ["Curl arrastre (drag curl)", "Bíceps", "Drag_Curl"], ["Curl martillo en polea (cuerda)", "Bíceps", "Cable_Hammer_Curls_-_Rope_Attachment"], ["Curl en polea alta", "Bíceps", "High_Cable_Curls"], ["Curl Zottman", "Bíceps", "Zottman_Curl"], ["Curl en máquina", "Bíceps", "Machine_Bicep_Curl"], ["Press militar con barra", "Hombros", "Standing_Military_Press"], ["Press con mancuernas sentado", "Hombros", "Seated_Dumbbell_Press"], ["Press en máquina (hombro)", "Hombros", "Leverage_Shoulder_Press"], ["Elevaciones laterales", "Hombros", "Side_Lateral_Raise"], ["Elevaciones laterales en polea", "Hombros", "Cable_Seated_Lateral_Raise"], ["Elevaciones frontales", "Hombros", "Front_Dumbbell_Raise"], ["Pájaros (deltoides posterior)", "Hombros", "Reverse_Flyes"], ["Face pull", "Hombros", "Face_Pull"], ["Remo al mentón", "Hombros", "Standing_Dumbbell_Upright_Row"], ["Press Arnold", "Hombros", "Arnold_Dumbbell_Press"], ["Elevación lateral a una mano", "Hombros", "One-Arm_Side_Laterals"], ["Pájaros en polea", "Hombros", "Cable_Rear_Delt_Fly"], ["Encogimientos con barra", "Hombros", "Barbell_Shrug"], ["Encogimientos con mancuernas", "Hombros", "Dumbbell_Shrug"], ["Encogimientos en polea", "Hombros", "Cable_Shrugs"], ["Encogimientos en máquina", "Hombros", "Leverage_Shrug"], ["Paseo del granjero", "Hombros", "Farmers_Walk"], ["Sentadilla", "Piernas", "Barbell_Squat"], ["Prensa", "Piernas", "Leg_Press"], ["Peso muerto rumano", "Piernas", "Romanian_Deadlift"], ["Zancadas", "Piernas", "Dumbbell_Lunges"], ["Sentadilla búlgara", "Piernas", "Split_Squat_with_Dumbbells"], ["Extensión de cuádriceps", "Piernas", "Leg_Extensions"], ["Curl femoral", "Piernas", "Lying_Leg_Curls"], ["Hip thrust", "Piernas", "Barbell_Hip_Thrust"], ["Gemelos de pie", "Piernas", "Standing_Calf_Raises"], ["Gemelos sentado", "Piernas", "Seated_Calf_Raise"], ["Sentadilla hack", "Piernas", "Hack_Squat"], ["Sentadilla frontal", "Piernas", "Front_Barbell_Squat"], ["Sentadilla goblet", "Piernas", "Goblet_Squat"], ["Sentadilla en multipower", "Piernas", "Smith_Machine_Squat"], ["Zancadas caminando", "Piernas", "Barbell_Walking_Lunge"], ["Peso muerto piernas rígidas", "Piernas", "Stiff-Legged_Barbell_Deadlift"], ["Peso muerto sumo", "Piernas", "Sumo_Deadlift"], ["Curl femoral sentado", "Piernas", "Seated_Leg_Curl"], ["Patada de glúteo", "Piernas", "Glute_Kickback"], ["Puente de glúteo a una pierna", "Piernas", "Single_Leg_Glute_Bridge"], ["Aductores en máquina", "Piernas", "Thigh_Adductor"], ["Abductores en máquina", "Piernas", "Thigh_Abductor"], ["Puente de glúteo con barra", "Piernas", "Barbell_Glute_Bridge"], ["Patada de glúteo en polea", "Piernas", "One-Legged_Cable_Kickback"], ["Pull through en polea", "Piernas", "Pull_Through"], ["Subida al cajón con mancuernas", "Piernas", "Dumbbell_Step_Ups"], ["Hiperextensión inversa", "Piernas", "Reverse_Hyperextension"], ["Gemelos en prensa", "Piernas", "Calf_Press_On_The_Leg_Press_Machine"], ["Pack Abdominales", "Abdominales", null], ["Crunch en máquina", "Abdominales", "Ab_Crunch_Machine"]]; // [nombre, grupo, id de foto]
 const RETIRED = [["Aperturas en polea", "Pecho", "Cable_Crossover"], ["Crunch en polea", "Abdominales", "Cable_Crunch"], ["Elevación de piernas colgado", "Abdominales", "Hanging_Leg_Raise"], ["Rueda abdominal", "Abdominales", "Ab_Roller"], ["Plancha", "Abdominales", "Plank"], ["Pallof press", "Abdominales", "Pallof_Press"]]; // ya no salen en el catálogo, pero se conservan para el historial
 const IMG = {}, GRP = {};
 [...EX, ...RETIRED].forEach(([n,g,i]) => { if (i) IMG[n] = i; GRP[n] = g; });
 const ACTIVE = new Set(EX.map(e => e[0]));
+const TIMED = new Set(['Pack Abdominales']);   // se apuntan por tiempo, no por peso
+const GLUTE = new Set(['Hip thrust','Puente de glúteo con barra','Puente de glúteo a una pierna','Patada de glúteo','Patada de glúteo en polea','Pull through en polea','Abductores en máquina','Subida al cajón con mancuernas','Hiperextensión inversa']);
+const fmtSec = x => { const m = Math.floor(x/60), s = Math.round(x%60); return m ? `${m} min${s ? ` ${s} s` : ''}` : `${s} s`; };
+/* lista de un grupo; en Piernas, los de glúteo van juntos con su propio subtítulo */
+function groupList(g, names, row){
+  if (g !== 'Piernas') return names.map(row).join('');
+  const a = names.filter(n => !GLUTE.has(n)), b = names.filter(n => GLUTE.has(n));
+  return a.map(row).join('') + (b.length ? `<div class="subh">🍑 Glúteos</div>` + b.map(row).join('') : '');
+}
 
 const TPL = [
   { id:'mi', name:'Mi plan', desc:'Tu rutina personalizada · 3 días que se repiten', days:[
@@ -382,7 +396,7 @@ const fmt = s => { const [y,m,d] = s.split('-'); return `${d}/${m}/${y.slice(2)}
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 const longDate = s => cap(parseISO(s).toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' }));
 const fmtN = n => String(Math.round(n*100)/100).replace('.', ',');
-const rng = l => l.max == null ? 'sin peso' : l.min === l.max ? `${fmtN(l.max)} kg` : `${fmtN(l.min)}–${fmtN(l.max)} kg`;
+const rng = l => l.dur != null ? fmtSec(l.dur) : l.max == null ? 'sin peso' : l.min === l.max ? `${fmtN(l.max)} kg` : `${fmtN(l.min)}–${fmtN(l.max)} kg`;
 const sr = l => (l.sets || l.reps) ? ` · ${esc(l.sets||'?')}×${esc(l.reps||'?')}` : '';
 const num = s => { if (s == null) return null; s = String(s).trim().replace(',', '.'); if (s === '') return null; const n = Number(s); return isFinite(n) && n >= 0 ? n : NaN; };
 const newer = (a,b) => !b || a.date > b.date || (a.date === b.date && a.ts > b.ts);
@@ -574,7 +588,8 @@ function ask(msg, ok = 'Aceptar', danger = false){
 /* ---------- HOY ---------- */
 function planGroupOrder(day){ const o = []; day.ex.forEach(n => { const g = groupOf(n); if (!o.includes(g)) o.push(g); }); return o; }
 function hoySections(day){
-  const ext = extrasOn(selDate).filter(n => !day.ex.includes(n));
+  const logged = state.logs.filter(l => l.date === selDate).map(l => l.n);
+  const ext = [...new Set([...extrasOn(selDate), ...logged])].filter(n => !day.ex.includes(n));
   const secs = planGroupOrder(day).map(g => ({ g, plan:true, items:day.ex.filter(n => groupOf(n) === g), extra:ext.filter(n => groupOf(n) === g) }));
   [...GROUPS, 'Otros'].forEach(g => { if (!secs.some(s => s.g === g)) { const xs = ext.filter(n => groupOf(n) === g); if (xs.length) secs.push({ g, plan:false, items:[], extra:xs }); } });
   return secs;
@@ -584,22 +599,27 @@ function exCard(n, isX){
   const fv = (o,f) => o && o[f] != null && o[f] !== '' ? esc(f==='min'||f==='max' ? fmtN(o[f]) : o[f]) : '';
   let h = `<div class="ex ${cur?'done':''} ${sk?'skip':''} ${open?'open':''}" style="--gc:${gc(g)}" data-n="${esc(n)}" ${isX ? 'data-x="1"' : 'data-drag="1"'}>
     <div class="exh" data-act="toggle" role="button">${pic(n,'thumb')}
-      <div class="exm"><div class="en">${esc(n)}${isX ? ' <span class="xtag">solo hoy</span>' : ''}</div><div class="exs">${cur ? `✓ ${rng(cur)}${sr(cur)}` : sk ? '✕ Hoy no lo he hecho' : prev ? `Última: ${rng(prev)}` : 'Sin registros'}${staleBadge(n)}</div></div>
+      <div class="exm"><div class="en">${esc(n)}${isX ? ` <span class="xtag">${extrasOn(selDate).includes(n) ? 'solo hoy' : 'extra'}</span>` : ''}</div><div class="exs">${cur ? `✓ ${rng(cur)}${sr(cur)}` : sk ? '✕ Hoy no lo he hecho' : prev ? `Última: ${rng(prev)}` : 'Sin registros'}${staleBadge(n)}</div></div>
       ${cur ? '' : `<button class="skb" data-act="skip" title="${sk ? 'Deshacer' : 'Hoy no lo hago'}">${sk ? '↺' : '✕'}</button>`}
       <span class="chev">›</span></div>`;
-  if (open) h += `<div class="exb">${pic(n,'big')}${staleNote(n, true)}
+  const timed = TIMED.has(n), pd = prev && prev.dur != null ? prev.dur : null, vd = v.dur != null ? v.dur : null;
+  if (open) h += `<div class="exb">${staleNote(n, true)}
       <div class="prev">${gtag(g)} &nbsp;${prev ? `Última vez (${fmt(prev.date)}): <b>${rng(prev)}</b>${sr(prev)}` : 'Primera vez con este ejercicio'}</div>
-      <div class="inp">
+      ${timed ? `<div class="inp t2">
+        <label>Minutos<input inputmode="numeric" pattern="[0-9]*" data-f="tm" value="${vd != null ? Math.floor(vd/60) : ''}" placeholder="${pd != null ? Math.floor(pd/60) : ''}"></label>
+        <label>Segundos<input inputmode="numeric" pattern="[0-9]*" data-f="ts" value="${vd != null ? Math.round(vd%60) || '' : ''}" placeholder="${pd != null ? Math.round(pd%60) || '' : ''}"></label>
+      </div><div class="muted" style="margin-top:6px">Este ejercicio va por tiempo. Si lo dejas vacío, se guarda el de la última vez.</div>` : `<div class="inp">
         <label>Mín kg<input inputmode="decimal" data-f="min" value="${fv(v,'min')}" placeholder="${fv(prev,'min')}"></label>
         <label>Máx kg<input inputmode="decimal" data-f="max" value="${fv(v,'max')}" placeholder="${fv(prev,'max')}"></label>
         <label>Series<input inputmode="numeric" pattern="[0-9]*" data-f="sets" value="${fv(v,'sets')}" placeholder="${fv(prev,'sets') || '4'}"></label>
         <label>Reps<input inputmode="numeric" pattern="[0-9]*" data-f="reps" value="${fv(v,'reps')}" placeholder="${fv(prev,'reps') || '10'}"></label>
       </div>
-      <div class="muted" style="margin-top:6px">Si dejas un campo vacío, se guarda lo de la última vez (o 4×10 si es la primera). Sin peso (p. ej. abdominales) también se puede guardar.</div>
+      <div class="muted" style="margin-top:6px">Si dejas un campo vacío, se guarda lo de la última vez (o 4×10 si es la primera). Sin peso también se puede guardar.</div>`}
       <div class="exact"><button class="btn" data-act="save">${cur ? 'Actualizar' : 'Guardar'}</button>
         <button class="ib" data-act="swap" title="Cambiar ejercicio">⇄</button>
-        <button class="ib" data-act="${isX ? 'delx' : 'del'}" title="${isX ? 'Quitar de hoy' : 'Quitar del plan'}">⊖</button>
+        ${isX && !extrasOn(selDate).includes(n) ? '' : `<button class="ib" data-act="${isX ? 'delx' : 'del'}" title="${isX ? 'Quitar de hoy' : 'Quitar del plan'}">⊖</button>`}
         ${cur ? `<button class="ib" data-act="unlog" title="Borrar lo apuntado hoy">🗑</button>` : ''}</div>
+      ${IMG[n] ? `<div style="margin-top:12px">${pic(n,'big')}</div>` : ''}
     </div>`;
   return h + `</div>`;
 }
@@ -652,12 +672,26 @@ function renderHoy(){
 
 function saveCard(card, n){
   const val = f => { const el = card.querySelector(`[data-f="${f}"]`); return el.value.trim() !== '' ? el.value.trim() : el.placeholder.trim(); };
+  if (TIMED.has(n)) {
+    const tm = card.querySelector('[data-f=tm]'), ts = card.querySelector('[data-f=ts]');
+    let sec = (parseInt(tm.value) || 0) * 60 + (parseInt(ts.value) || 0);
+    if (!sec && !tm.value.trim() && !ts.value.trim()) sec = (parseInt(tm.placeholder) || 0) * 60 + (parseInt(ts.placeholder) || 0);
+    if (!sec) { toast('Pon el tiempo'); return; }
+    const e0 = logOn(n, selDate);
+    const rec = { id: e0 ? e0.id : uid(), date:selDate, plan:state.activePlan, day:selDay, n, g:groupOf(n), min:null, max:null, dur:sec, sets:'', reps:'', ts:Date.now() };
+    if (card.dataset.x) rec.extra = true;
+    if (e0) Object.assign(e0, rec); else state.logs.push(rec);
+    unskip(n, selDate); save(); toast(`Guardado · ${fmtSec(sec)} ✓`); openName = null; render();
+    const el = [...document.querySelectorAll('#v-hoy .ex')].find(x => x.dataset.n === n);
+    if (el) { el.scrollIntoView({ block:'nearest' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1300); }
+    return;
+  }
   let mn = num(val('min')), mx = num(val('max'));
   if (Number.isNaN(mn) || Number.isNaN(mx)) { toast('Peso no válido'); return; }
   if (mn == null) mn = mx; if (mx == null) mx = mn;
   if (mn != null && mn > mx) [mn, mx] = [mx, mn];
   const ex0 = logOn(n, selDate);
-  const rec = { id: ex0 ? ex0.id : uid(), date:selDate, plan:state.activePlan, day:selDay, n, g:groupOf(n), min:mn, max:mx, sets:val('sets'), reps:val('reps'), ts:Date.now() };
+  const rec = { id: ex0 ? ex0.id : uid(), date:selDate, plan:state.activePlan, day:selDay, n, g:groupOf(n), min:mn, max:mx, dur:null, sets:val('sets'), reps:val('reps'), ts:Date.now() };
   if (card.dataset.x) rec.extra = true;
   if (ex0) Object.assign(ex0, rec); else state.logs.push(rec);
   unskip(n, selDate); save();
@@ -775,7 +809,7 @@ function renderPicker(){
   const title = pick.mode === 'swap' ? `Cambiar «${esc(pick.n)}» por…` : pick.mode === 'addx' ? 'Extra de hoy' : `Añadir a «${esc(day.name)}»`;
   openOv('pick', ovHead(title) + (pick.mode === 'addx' ? xtabs('addx') : '')
     + `<div class="chips">${Object.keys(cat).map(g => `<button class="chip ${g===pick.group?'on':''}" data-g="${esc(g)}">${esc(g)}<div class="dots"><i style="background:${gc(g)}"></i></div></button>`).join('')}</div>
-    <div>${list.map(n => `<button class="li" data-pn="${esc(n)}">${pic(n,'thumb')}<div class="x">${esc(n)}${hasLogs(n)?`<div class="muted">con historial${staleBadge(n)}</div>`:''}</div></button>`).join('') || '<p class="muted">No quedan ejercicios de este grupo.</p>'}</div>
+    <div style="--gc:${gc(pick.group)}">${groupList(pick.group, list, n => `<button class="li" data-pn="${esc(n)}">${pic(n,'thumb')}<div class="x">${esc(n)}${hasLogs(n)?`<div class="muted">con historial${staleBadge(n)}</div>`:''}</div></button>`) || '<p class="muted">No quedan ejercicios de este grupo.</p>'}</div>
     <div class="row"><input id="newEx" placeholder="Otro ejercicio de ${esc(pick.group)}…"><button class="btn sm" id="newExBtn">Añadir</button></div>
     ${pick.mode === 'addx' ? '<p class="muted">Se añade solo para hoy; el plan no cambia.</p>' : pick.mode === 'add' ? '<p class="muted">Se añade al plan y saldrá también los próximos días.</p>' : ''}`);
 }
@@ -875,16 +909,22 @@ function renderEvo(){
   $('#v-evo').innerHTML = h;
 }
 function dayDetailHTML(date, inf){
-  let h = `<div class="detail" id="calDetail"><div class="t">${esc(longDate(date))}</div>`;
+  let h = `<div class="detail" id="calDetail"><div class="dth"><div class="t">${esc(longDate(date))}</div>${date <= todayISO() ? `<button class="tb add" data-edit="${date}">✏️ Editar</button>` : ''}</div>`;
   if (!inf) return h + `<div class="muted">No consta que fueras al gimnasio este día.</div></div>`;
-  if (inf.groups.length) h += `<div class="gtags" style="margin-bottom:8px">${inf.groups.map(gtag).join('')}</div>`;
-  else if (!inf.acts.length) h += `<div class="muted">✓ Fuiste al gimnasio (sin ejercicios apuntados).</div>`;
+  if (!inf.groups.length && !inf.acts.length) h += `<div class="muted">✓ Fuiste al gimnasio (sin ejercicios apuntados).</div>`;
   const pls = [...new Set(inf.logs.map(l => planName(l.plan)))];
   if (pls.length) h += `<div class="muted" style="margin-bottom:6px">Plan: ${pls.map(esc).join(' + ')}</div>`;
   const T = state.timers[date] || {}, sms = sessMs(date);
-  if (sms) h += `<div class="sessline">⏱ Sesión <b>${durMin(sms/60000)}</b>${Object.keys(T).filter(g => tMs(T[g]) > 0).map(g => ` · <span style="color:${gc(g)}">${esc(g)}</span> ${durMin(tMs(T[g])/60000)}`).join('')}</div>`;
-  h += inf.acts.map(a => { const A = actOf(a.a); return `<div class="dl"><span class="aico">${A.ico}</span><div class="x">${esc(A.n)}<div class="muted">${durMin(a.min)}</div></div></div>`; }).join('');
-  h += inf.logs.sort((a,b) => GROUPS.indexOf(a.g) - GROUPS.indexOf(b.g)).map(l => `<div class="dl">${pic(l.n,'thumb')}<div class="x">${esc(l.n)}${l.extra ? ' <span class="xtag">extra</span>' : ''}<div class="muted">${rng(l)}${sr(l)}</div></div></div>`).join('');
+  if (sms) h += `<div class="sessline">⏱ Sesión <b>${durMin(sms/60000)}</b></div>`;
+  // ejercicios separados por grupo, como en el entreno del día
+  const gs = [...GROUPS, 'Otros'].filter(g => inf.logs.some(l => (l.g || groupOf(l.n)) === g) || tMs(T[g]) > 0);
+  h += gs.map(g => {
+    const L = inf.logs.filter(l => (l.g || groupOf(l.n)) === g), ms = tMs(T[g]);
+    return `<div class="gh dg" style="--gc:${gc(g)}"><span class="gname">${esc(g)}</span><span class="gcnt">${L.length}</span><span class="gsp"></span>${ms ? `<span class="gtime fin">⏱ ${durMin(ms/60000)}</span>` : ''}</div>`
+      + L.map(l => `<div class="dl">${pic(l.n,'thumb')}<div class="x">${esc(l.n)}${l.extra ? ' <span class="xtag">extra</span>' : ''}<div class="muted">${rng(l)}${sr(l)}</div></div></div>`).join('');
+  }).join('');
+  if (inf.acts.length) h += `<div class="gh dg" style="--gc:var(--ac2)"><span class="gname">Actividades</span><span class="gsp"></span><span class="gtime fin">${durMin(inf.acts.reduce((a,x) => a + x.min, 0))}</span></div>`
+    + inf.acts.map(a => { const A = actOf(a.a); return `<div class="dl"><span class="aico">${A.ico}</span><div class="x">${esc(A.n)}<div class="muted">${durMin(a.min)}</div></div></div>`; }).join('');
   const sks = (state.skips[date] || []).filter(n => !inf.logs.some(l => l.n === n));
   if (sks.length) h += `<div class="muted" style="margin-top:8px">✕ Sin hacer: ${sks.map(esc).join(', ')}</div>`;
   return h + `</div>`;
@@ -992,6 +1032,11 @@ function openPesoDetail(n){
 $('#v-evo').addEventListener('click', e => {
   const t = e.target.closest('[data-tab]'); if (t) { evoTab = t.dataset.tab; renderEvo(); return; }
   const cm = e.target.closest('[data-cm]'); if (cm) { calM += +cm.dataset.cm; if (calM < 0) { calM = 11; calY--; } if (calM > 11) { calM = 0; calY++; } renderEvo(); return; }
+  const ed = e.target.closest('[data-edit]');
+  if (ed) { const d = ed.dataset.edit, L = state.logs.filter(l => l.date === d).sort((a,b) => b.ts - a.ts);
+    const sameP = L.find(l => l.plan === state.activePlan);
+    if (sameP) selDay = sameP.day; else if (L.length) toast(`Ese día era de «${planName(L[0].plan)}»: lo apuntado sale igualmente para editarlo`);
+    selDate = d; openName = null; show('hoy'); return; }
   const cd = e.target.closest('[data-cd]'); if (cd) { selCal = cd.dataset.cd; renderEvo(); setTimeout(() => { const d = $('#calDetail'); if (d) d.scrollIntoView({ behavior:'smooth', block:'start' }); }, 30); return; }
   const pg = e.target.closest('[data-pg]'); if (pg) { const g = pg.dataset.pg; if (pesOpen.has(g)) pesOpen.delete(g); else pesOpen.add(g); renderEvo(); return; }
   const pe = e.target.closest('[data-pe]'); if (pe) { openPesoDetail(pe.dataset.pe); return; }
@@ -1004,7 +1049,7 @@ function renderCat(){
   for (const g of Object.keys(cat)) {
     const open = catOpen.has(g);
     h += `<div class="pg ${open ? 'open' : ''}" style="--gc:${gc(g)}"><button class="pgh" data-cg="${esc(g)}"><i class="gdot"></i><b>${esc(g)}</b><span class="muted">${pl(cat[g].length,'ejercicio','ejercicios')}</span><span class="chev">›</span></button>`;
-    if (open) h += cat[g].map(n => `<div class="li" data-info="${esc(n)}">${pic(n,'thumb')}<div class="x">${esc(n)}${hasLogs(n)?`<div class="muted">con historial${staleBadge(n)}</div>`:''}</div>${!GRP[n]?`<button class="ib" data-rmc="${esc(n)}">✕</button>`:''}<span class="chev">›</span></div>`).join('')
+    if (open) h += groupList(g, cat[g], n => `<div class="li" data-info="${esc(n)}">${pic(n,'thumb')}<div class="x">${esc(n)}${hasLogs(n)?`<div class="muted">con historial${staleBadge(n)}</div>`:''}</div>${!GRP[n]?`<button class="ib" data-rmc="${esc(n)}">✕</button>`:''}<span class="chev">›</span></div>`)
       + `<div class="row" style="padding:0 8px 8px"><input data-addg="${esc(g)}" placeholder="Nuevo ejercicio de ${esc(g)}"><button class="btn sm" data-addb="${esc(g)}">Añadir</button></div>`;
     h += `</div>`;
   }
