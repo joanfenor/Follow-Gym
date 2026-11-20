@@ -1,5 +1,5 @@
 // Mis entrenos · service worker
-const VERSION = 'v10';
+const VERSION = 'v11';
 const PREFIX = 'misentrenos-';            // prefijo propio: no toca la caché de otras apps del mismo github.io
 const CACHE = PREFIX + VERSION, IMGC = PREFIX + 'fotos';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icono-32.png', 'icono-192.png', 'icono-512.png', 'icono-180.png'];

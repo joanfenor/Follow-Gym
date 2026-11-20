@@ -241,6 +241,7 @@ input::placeholder{color:var(--mu);opacity:.6}
 .gtime{font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;color:var(--mu);margin-right:2px}
 .gtime.run{color:var(--ok)}
 .gtime.fin{color:var(--tx);font-size:13px}
+button.gtime.edt{background:none;border:1px dashed var(--bd);border-radius:8px;padding:5px 7px;font-family:inherit;cursor:pointer}
 .tb{flex:none;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:9px;height:32px;min-width:32px;padding:0 8px;font-size:13px;font-weight:700}
 .tb.play{background:var(--ok);border-color:var(--ok);color:#fff}
 .tb.add{color:var(--ac);border-color:color-mix(in srgb,var(--ac) 45%,var(--bd))}
@@ -330,7 +331,7 @@ html[data-theme=light] .xbtn{color:var(--ac2)}
 
 <script>
 'use strict';
-const APP_VERSION = 'v10';
+const APP_VERSION = 'v11';
 const KEY = 'entreno_pesas_v2', KEY_V1 = 'entreno_pesas_v1';
 /* Fotos: free-exercise-db (dominio público, github.com/yuhonas/free-exercise-db) */
 const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
@@ -628,11 +629,12 @@ function groupHead(s){
   const all = [...s.items, ...s.extra], done = all.filter(n => logOn(n, selDate)).length;
   let tm = '';
   if (isToday) {
-    tm = `<span class="gtime ${run ? 'run' : t && t.done ? 'fin' : ''}" ${run ? `data-tlive="${selDate}|${esc(s.g)}"` : ''}>${t ? (t.done && !run ? '✓ ' + durMin(ms/60000) : clock(ms)) : ''}</span>
-      ${run ? `<button class="tb" data-act="tpause" data-g="${esc(s.g)}" title="Pausa">⏸</button>` : `<button class="tb play" data-act="tstart" data-g="${esc(s.g)}" title="${t ? 'Seguir' : 'Iniciar'}">▶</button>`}
-      ${t && !t.done ? `<button class="tb" data-act="tfin" data-g="${esc(s.g)}" title="Finalizar">■</button>` : ''}
-      ${t && !run ? `<button class="tb" data-act="treset" data-g="${esc(s.g)}" title="Borrar el tiempo">🗑</button>` : ''}`;
-  } else if (ms) tm = `<span class="gtime fin">⏱ ${durMin(ms/60000)}</span>`;
+    tm = run ? `<span class="gtime run" data-tlive="${selDate}|${esc(s.g)}">${clock(ms)}</span>`
+             : t ? `<button class="gtime edt ${t.done ? 'fin' : ''}" data-act="tedit" data-g="${esc(s.g)}" title="Cambiar o borrar el tiempo">${t.done ? '✓ ' + durMin(ms/60000) : clock(ms)} ✎</button>` : '';
+    tm += `${run ? `<button class="tb" data-act="tpause" data-g="${esc(s.g)}" title="Pausa">⏸</button>` : `<button class="tb play" data-act="tstart" data-g="${esc(s.g)}" title="${t ? 'Seguir' : 'Iniciar'}">▶</button>`}
+      ${t && !t.done ? `<button class="tb" data-act="tfin" data-g="${esc(s.g)}" title="Finalizar">■</button>` : ''}`;
+  } else tm = ms ? `<button class="gtime edt fin" data-act="tedit" data-g="${esc(s.g)}" title="Cambiar o borrar el tiempo">⏱ ${durMin(ms/60000)} ✎</button>`
+                 : `<button class="tb" data-act="tedit" data-g="${esc(s.g)}" title="Poner el tiempo">⏱ ＋</button>`;
   return `<div class="gh" style="--gc:${gc(s.g)}" ${s.plan ? 'data-gdrag="1"' : ''}>
     <span class="gname">${esc(s.g)}</span><span class="gcnt">${done}/${all.length}</span>
     <span class="gsp"></span>${tm}
@@ -721,6 +723,7 @@ $('#v-hoy').addEventListener('click', async e => {
   const a = b.dataset.act, g = b.dataset.g;
   if (a === 'tstart') { tStart(selDate, g); state.runDay = { date:selDate, plan:state.activePlan, day:selDay }; save(); renderHoy(); return; }
   if (a === 'tpause') { tPause(selDate, g); save(); renderHoy(); return; }
+  if (a === 'tedit') { openTimeForm(g); return; }
   if (a === 'treset') { if (await ask(`¿Borrar el tiempo de ${g} de este día?`, 'Borrar', true)) { delete state.timers[selDate][g]; if (!Object.keys(state.timers[selDate]).length) delete state.timers[selDate]; save(); renderHoy(); } return; }
   if (a === 'tfin') { tFinish(selDate, g); save(); renderHoy(); toast(`${g}: ${durMin(tMs(tGet(selDate, g))/60000)}`); return; }
   if (a === 'gadd') { const inPlan = planGroupOrder(curDay()).includes(g); openPicker({ mode: inPlan ? 'add' : 'addx', group:g }); return; }
@@ -824,6 +827,16 @@ function applyPick(n){
     const g = groupOf(n); let k = -1; d.ex.forEach((e, i) => { if (groupOf(e) === g) k = i; });
     d.ex.splice(k >= 0 ? k + 1 : d.ex.length, 0, n); });
 }
+/* cambiar o borrar a mano el tiempo de un grupo (cualquier día) */
+function openTimeForm(g){
+  const t = tGet(selDate, g), m = Math.round(tMs(t) / 60000); pick.tg = g;
+  openOv('tform', ovHead(`⏱ Tiempo de ${esc(g)}`) + `<p class="muted">${esc(longDate(selDate))}</p>
+    <div class="hm"><label>Horas<input id="th" inputmode="numeric" pattern="[0-9]*" value="${t ? Math.floor(m/60) || '' : ''}" placeholder="0"></label>
+    <label>Minutos<input id="tmn" inputmode="numeric" pattern="[0-9]*" value="${t ? m % 60 || '' : ''}" placeholder="0"></label></div>
+    <button class="btn" id="tSave">Guardar tiempo</button>
+    ${t ? '<button class="btn danger" id="tDel">Borrar el tiempo de este grupo</button>' : ''}`);
+  setTimeout(() => { const i = $('#tmn'); if (i) i.focus(); }, 60);
+}
 function openActForm(aid, entry){
   pick.act = aid; pick.edit = entry ? entry.id : null; const A = actOf(aid), m = entry ? entry.min : 0;
   openOv('actf', ovHead(`${A.ico} ${esc(A.n)}`) + `<p class="muted">${esc(longDate(selDate))} · ¿cuánto tiempo?</p>
@@ -851,6 +864,18 @@ $('#ov').addEventListener('click', async e => {
     } else if (e.target.id === 'actDel') {
       if (await ask('¿Borrar esta actividad?', 'Borrar', true)) { state.actLogs = state.actLogs.filter(a => a.id !== pick.edit); save(); closeOv(); render(); }
     }
+  } else if (ovMode === 'tform') {
+    const g = pick.tg;
+    if (e.target.id === 'tSave') {
+      const tot = (parseInt($('#th').value) || 0) * 60 + (parseInt($('#tmn').value) || 0);
+      if (!tot) { toast('Pon el tiempo, o usa «Borrar»'); return; }
+      const T = state.timers[selDate] = state.timers[selDate] || {};
+      T[g] = { segs:[[0, tot * 60000]], done:true }; save(); closeOv(); render(); toast(`${g}: ${durMin(tot)}`);
+    } else if (e.target.id === 'tDel') {
+      if (await ask(`¿Borrar el tiempo de ${g} de este día?`, 'Borrar', true)) {
+        delete state.timers[selDate][g]; if (!Object.keys(state.timers[selDate]).length) delete state.timers[selDate];
+        save(); closeOv(); render(); toast('Tiempo borrado'); }
+    }
   } else if (ovMode === 'info') {
     const ge = e.target.closest('[data-goevo]');
     if (ge) { const n = ge.dataset.goevo; closeOv(); evoTab = 'pesos'; pesOpen.add(groupOf(n)); show('evo'); openPesoDetail(n); }
@@ -865,7 +890,7 @@ $('#ov').addEventListener('click', async e => {
   }
 });
 $('#ov').addEventListener('input', e => { if (e.target.id === 'wipeTxt') $('#wipeGo').disabled = e.target.value.trim().toUpperCase() !== 'BORRAR'; });
-$('#ov').addEventListener('keydown', e => { if (e.key === 'Enter' && ovMode === 'actf') $('#actSave').click(); });
+$('#ov').addEventListener('keydown', e => { if (e.key === 'Enter' && ovMode === 'actf') $('#actSave').click(); if (e.key === 'Enter' && ovMode === 'tform') $('#tSave').click(); });
 
 /* ficha de ejercicio (foto grande + resumen) */
 function openInfo(n){
@@ -920,7 +945,7 @@ function dayDetailHTML(date, inf){
   const gs = [...GROUPS, 'Otros'].filter(g => inf.logs.some(l => (l.g || groupOf(l.n)) === g) || tMs(T[g]) > 0);
   h += gs.map(g => {
     const L = inf.logs.filter(l => (l.g || groupOf(l.n)) === g), ms = tMs(T[g]);
-    return `<div class="gh dg" style="--gc:${gc(g)}"><span class="gname">${esc(g)}</span><span class="gcnt">${L.length}</span><span class="gsp"></span>${ms ? `<span class="gtime fin">⏱ ${durMin(ms/60000)}</span>` : ''}</div>`
+    return `<div class="gh dg" style="--gc:${gc(g)}"><span class="gname">${esc(g)}</span><span class="gcnt">${L.length}</span><span class="gsp"></span>${ms ? `<button class="gtime edt fin" data-edit="${date}" title="Editar">⏱ ${durMin(ms/60000)} ✎</button>` : ''}</div>`
       + L.map(l => `<div class="dl">${pic(l.n,'thumb')}<div class="x">${esc(l.n)}${l.extra ? ' <span class="xtag">extra</span>' : ''}<div class="muted">${rng(l)}${sr(l)}</div></div></div>`).join('');
   }).join('');
   if (inf.acts.length) h += `<div class="gh dg" style="--gc:var(--ac2)"><span class="gname">Actividades</span><span class="gsp"></span><span class="gtime fin">${durMin(inf.acts.reduce((a,x) => a + x.min, 0))}</span></div>`
