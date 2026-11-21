@@ -207,7 +207,7 @@ input::placeholder{color:var(--mu);opacity:.6}
   background:radial-gradient(120% 70% at 50% 0%,var(--covera) 0%,var(--bg) 60%);transition:opacity .35s,visibility .35s}
 #cover.hide{opacity:0;visibility:hidden}
 .cv{width:100%;max-width:420px;text-align:center;margin:auto 0}
-.cvicon{width:120px;height:120px;border-radius:50%;border:3px solid var(--ac);object-fit:cover;box-shadow:0 12px 40px rgba(255,138,61,.25);animation:pop .6s ease-out}
+.cvicon{width:96px;height:96px;border-radius:50%;border:3px solid var(--ac);object-fit:cover;box-shadow:0 12px 40px rgba(255,138,61,.25);animation:pop .6s ease-out}
 @keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
 .cv h1{font-size:32px;margin:18px 0 4px;letter-spacing:-.02em}
 .cvsub{color:var(--mu);font-size:15px}
@@ -221,14 +221,22 @@ input::placeholder{color:var(--mu);opacity:.6}
 .cvday.on{border-color:var(--ac);background:var(--sel);box-shadow:0 0 0 1px var(--ac)}
 .cvday .dots{display:flex;gap:3px;flex:none}
 .cvday .dots i{width:14px;height:4px;border-radius:2px}
-.cv h1{margin-top:12px}
+.cv h1{margin-top:10px}
+.cv h1{font-size:28px}
+.cvcard{margin:14px 0 4px;padding:12px}
+.cvday{padding:8px 12px}
+.cvst{margin-top:10px}
+.cvst div{padding:6px 10px}
+.cvst b{font-size:18px}
+.cvver{margin-top:12px}
+#cover{padding-top:calc(16px + env(safe-area-inset-top))}
 .cvst div{flex:1;background:var(--card2);border-radius:12px;padding:8px 10px}
 .cvst b{display:block;font-size:20px}
 .cvst span{font-size:11px;color:var(--mu)}
 #cvGo{font-size:18px;padding:16px;margin-top:16px;border-radius:14px}
-.cvnav{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
-.cvnav button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px;border-radius:16px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:15px;font-weight:700}
-.cvnav button span{font-size:28px;line-height:1}
+.cvnav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.cvnav button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 2px;border-radius:14px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:12px;font-weight:700;min-width:0}
+.cvnav button span{font-size:22px;line-height:1}
 .cvnav button.main{background:var(--ac);border-color:var(--ac);color:#111}
 html[data-theme=light] .cvnav button.main{color:#fff}
 .cvrun .t{font-size:19px;font-weight:700;margin:2px 0 6px}
@@ -341,7 +349,7 @@ html[data-theme=light] .xbtn{color:var(--ac2)}
 
 <script>
 'use strict';
-const APP_VERSION = 'v12';
+const APP_VERSION = 'v13';
 const KEY = 'entreno_pesas_v2', KEY_V1 = 'entreno_pesas_v1';
 /* Fotos: free-exercise-db (dominio público, github.com/yuhonas/free-exercise-db) */
 const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
@@ -1268,7 +1276,7 @@ function renderCover(){
     $('#cvInfo').innerHTML = (inf ? `<div class="cvdone">✓ Hoy ya has ido${inf.logs.length ? ` · ${pl(inf.logs.length,'ejercicio','ejercicios')}` : ''}${inf.acts.length ? ` · ${inf.acts.map(a => actOf(a.a).ico).join('')}` : ''}</div>` : '')
       + (ap.days.length ? `<div class="k1">¿Qué toca hoy? · ${esc(ap.name)}</div>
           <div class="cvdays">${ap.days.map(x => `<button class="cvday ${x.id===selDay?'on':''}" data-cvday="${esc(x.id)}"><span>${esc(x.name)}${d && x.id===d.id ? '<span class="toca">TOCA</span>' : ''}</span><div class="dots">${dayGroups(x).map(g => `<i style="background:${gc(g)}"></i>`).join('')}</div></button>`).join('')}</div>
-          ${sd ? `<div class="gtags" style="margin-top:8px">${dayGroups(sd).map(gtag).join('')}</div>` : ''}`
+`
         : `<div class="t">Elige un plan en Ajustes</div>`) + stats;
     $('#cvBtns').innerHTML = `<div class="cvnav">
       <button class="main" data-go="hoy"><span>🏋️</span>Hoy</button><button data-go="evo"><span>📈</span>Evolución</button>
