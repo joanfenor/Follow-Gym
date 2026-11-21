@@ -225,7 +225,14 @@ input::placeholder{color:var(--mu);opacity:.6}
 .cvst div{flex:1;background:var(--card2);border-radius:12px;padding:8px 10px}
 .cvst b{display:block;font-size:20px}
 .cvst span{font-size:11px;color:var(--mu)}
-#cvGo{font-size:17px;padding:15px;margin-top:16px;border-radius:14px}
+#cvGo{font-size:18px;padding:16px;margin-top:16px;border-radius:14px}
+.cvnav{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.cvnav button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:16px 8px;border-radius:16px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:15px;font-weight:700}
+.cvnav button span{font-size:28px;line-height:1}
+.cvnav button.main{background:var(--ac);border-color:var(--ac);color:#111}
+html[data-theme=light] .cvnav button.main{color:#fff}
+.cvrun .t{font-size:19px;font-weight:700;margin:2px 0 6px}
+.cvrun .prog{margin-top:10px}
 .cvver{margin-top:18px;font-size:12px;color:var(--mu)}
 .cvver b{color:var(--ac)}
 #toast{position:fixed;left:50%;bottom:calc(80px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:var(--toastbg);color:var(--toasttx);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;z-index:30;pointer-events:none;max-width:90%;text-align:center}
@@ -266,7 +273,10 @@ html[data-theme=light] .xbtn{color:var(--ac2)}
 .actb{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 6px;border-radius:14px;border:1px solid color-mix(in srgb,var(--gc) 45%,var(--bd));background:color-mix(in srgb,var(--gc) 12%,var(--card));color:var(--tx);font-weight:600;font-size:14px}
 .actb .aico{font-size:30px;width:auto}
 .actb small{color:var(--mu);font-weight:500}
-.inp.t2{grid-template-columns:1fr 1fr}
+.inp{grid-template-columns:repeat(4,1fr) 46px}
+.inp.t2{grid-template-columns:1fr 1fr 46px}
+.svb{align-self:end;height:44px;width:46px;border-radius:10px;border:0;background:var(--ac);font-size:20px;line-height:1;padding:0}
+.svb.upd{background:var(--ok)}
 .subh{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gc);padding:10px 10px 4px;border-top:1px solid var(--bd)}
 .hm{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
 .hm label{font-size:12px;color:var(--mu);display:flex;flex-direction:column;gap:4px}
@@ -325,13 +335,13 @@ html[data-theme=light] .xbtn{color:var(--ac2)}
   <h1>Mis entrenos</h1>
   <div class="cvsub" id="cvHello"></div>
   <div class="cvcard" id="cvInfo"></div>
-  <button class="btn" id="cvGo">Empezar</button>
+  <div id="cvBtns"></div>
   <div class="cvver" id="cvVer"></div>
 </div></div>
 
 <script>
 'use strict';
-const APP_VERSION = 'v11';
+const APP_VERSION = 'v12';
 const KEY = 'entreno_pesas_v2', KEY_V1 = 'entreno_pesas_v1';
 /* Fotos: free-exercise-db (dominio público, github.com/yuhonas/free-exercise-db) */
 const IMG_BASE = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
@@ -609,14 +619,16 @@ function exCard(n, isX){
       ${timed ? `<div class="inp t2">
         <label>Minutos<input inputmode="numeric" pattern="[0-9]*" data-f="tm" value="${vd != null ? Math.floor(vd/60) : ''}" placeholder="${pd != null ? Math.floor(pd/60) : ''}"></label>
         <label>Segundos<input inputmode="numeric" pattern="[0-9]*" data-f="ts" value="${vd != null ? Math.round(vd%60) || '' : ''}" placeholder="${pd != null ? Math.round(pd%60) || '' : ''}"></label>
+        <button class="svb ${cur ? 'upd' : ''}" data-act="save" title="${cur ? 'Actualizar' : 'Guardar'}">💾</button>
       </div><div class="muted" style="margin-top:6px">Este ejercicio va por tiempo. Si lo dejas vacío, se guarda el de la última vez.</div>` : `<div class="inp">
         <label>Mín kg<input inputmode="decimal" data-f="min" value="${fv(v,'min')}" placeholder="${fv(prev,'min')}"></label>
         <label>Máx kg<input inputmode="decimal" data-f="max" value="${fv(v,'max')}" placeholder="${fv(prev,'max')}"></label>
         <label>Series<input inputmode="numeric" pattern="[0-9]*" data-f="sets" value="${fv(v,'sets')}" placeholder="${fv(prev,'sets') || '4'}"></label>
         <label>Reps<input inputmode="numeric" pattern="[0-9]*" data-f="reps" value="${fv(v,'reps')}" placeholder="${fv(prev,'reps') || '10'}"></label>
+        <button class="svb ${cur ? 'upd' : ''}" data-act="save" title="${cur ? 'Actualizar' : 'Guardar'}">💾</button>
       </div>
-      <div class="muted" style="margin-top:6px">Si dejas un campo vacío, se guarda lo de la última vez (o 4×10 si es la primera). Sin peso también se puede guardar.</div>`}
-      <div class="exact"><button class="btn" data-act="save">${cur ? 'Actualizar' : 'Guardar'}</button>
+      <div class="muted" style="margin-top:6px">💾 guarda. Si dejas un campo vacío, se guarda lo de la última vez (o 4×10 si es la primera).</div>`}
+      <div class="exact"><button class="btn sec" data-act="evo">📈 Evolución</button>
         <button class="ib" data-act="swap" title="Cambiar ejercicio">⇄</button>
         ${isX && !extrasOn(selDate).includes(n) ? '' : `<button class="ib" data-act="${isX ? 'delx' : 'del'}" title="${isX ? 'Quitar de hoy' : 'Quitar del plan'}">⊖</button>`}
         ${cur ? `<button class="ib" data-act="unlog" title="Borrar lo apuntado hoy">🗑</button>` : ''}</div>
@@ -736,6 +748,7 @@ $('#v-hoy').addEventListener('click', async e => {
     save(); renderHoy();
   }
   else if (a === 'save') saveCard(card, n);
+  else if (a === 'evo') openExEvo(n);
   else if (a === 'swap') openPicker({ mode:'swap', n, x:isX, group:groupOf(n) });
   else if (a === 'del') { if (await ask(`¿Quitar «${n}» de este día del plan?\nEl historial se conserva.`, 'Quitar', true)) { openName = null; changeDay(d => d.ex.splice(d.ex.indexOf(n), 1)); } }
   else if (a === 'delx') { state.dayExtra[selDate] = extrasOn(selDate).filter(x => x !== n); if (!state.dayExtra[selDate].length) delete state.dayExtra[selDate]; openName = null; save(); render(); }
@@ -882,7 +895,7 @@ $('#ov').addEventListener('click', async e => {
   } else if (ovMode === 'pdet') {
     const b = e.target.closest('[data-delog]');
     if (b) { const l = state.logs.find(x => x.id === b.dataset.delog);
-      if (l && await ask(`¿Borrar el registro del ${fmt(l.date)} (${rng(l)})?`, 'Borrar', true)) { state.logs = state.logs.filter(x => x !== l); save(); render(); if (logsFor(l.n).length) openPesoDetail(l.n); else closeOv(); } }
+      if (l && await ask(`¿Borrar el registro del ${fmt(l.date)} (${rng(l)})?`, 'Borrar', true)) { state.logs = state.logs.filter(x => x !== l); save(); render(); if (state.logs.some(x => x.n === l.n)) openExEvo(l.n); else closeOv(); } }
   } else if (ovMode === 'wipe') {
     if (e.target.id === 'wipeExp') exportData();
     else if (e.target.id === 'wipeNext') openWipe(2);
@@ -997,7 +1010,7 @@ function asisHTML(){
     h += `<h3>Tiempo en ${esc(mShort)}</h3>` + rows.map(r => `<div class="hb"><span class="l">${esc(r.l)}</span><div class="tr"><i style="width:${r.v/m2*100}%;background:${r.c}"></i></div><span class="n w">${durMin(r.v)}</span></div>`).join(''); }
   return h;
 }
-function chart(L){
+function chart(L, leg = ['Peso máx.', 'Peso mín.']){
   const W=340, H=190, pl=34, pr=12, pt=12, pb=26;
   const t = L.map(l => parseISO(l.date).getTime()), t0 = t[0], t1 = t[t.length-1];
   let y0 = Math.min(...L.map(l => l.min)), y1 = Math.max(...L.map(l => l.max));
@@ -1012,7 +1025,7 @@ function chart(L){
   const dots = (f,c) => L.map((l,i) => `<circle cx="${X(t[i]).toFixed(1)}" cy="${Y(l[f]).toFixed(1)}" r="3" class="${c}"/>`).join('');
   g += `<path d="${path('min')}" class="lmin"/><path d="${path('max')}" class="lmax"/>${dots('min','dmin')}${dots('max','dmax')}`;
   g += `<text x="${pl}" y="${H-8}" class="ax">${fmt(L[0].date)}</text><text x="${W-pr}" y="${H-8}" class="ax" text-anchor="end">${fmt(L[L.length-1].date)}</text>`;
-  return `<svg viewBox="0 0 ${W} ${H}" class="chart">${g}</svg><div class="legend"><span><i class="k kmax"></i>Peso máx.</span><span><i class="k kmin"></i>Peso mín.</span></div>`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart">${g}</svg><div class="legend"><span><i class="k kmax"></i>${leg[0]}</span>${leg[1] ? `<span><i class="k kmin"></i>${leg[1]}</span>` : ''}</div>`;
 }
 function spark(L){
   if (L.length < 2) return '<svg class="spark" viewBox="0 0 70 26"></svg>';
@@ -1041,18 +1054,31 @@ function pesosHTML(){
     return h + `</div>`;
   }).join('');
 }
+/* evolución de un ejercicio desde «Hoy» (peso, o tiempo si va por tiempo) */
+function openExEvo(n){
+  if (logsFor(n).length) { openPesoDetail(n); return; }
+  const T = state.logs.filter(l => l.n === n && l.dur != null).sort((a,b) => a.date.localeCompare(b.date) || a.ts - b.ts);
+  if (!T.length) { openOv('pdet', ovHead(esc(n), '‹ Volver') + `${IMG[n] ? pic(n,'big') : ''}<p class="empty">Aún no hay datos de este ejercicio.<br>Cuando lo guardes con 💾 verás aquí su evolución.</p>`); return; }
+  const best = T.reduce((a,l) => l.dur > a.dur ? l : a, T[0]), last = T[T.length-1];
+  openOv('pdet', ovHead(esc(n), '‹ Volver') + `<div class="stats">
+      <div class="st"><div class="k1">Mejor tiempo</div><div class="v">${fmtSec(best.dur)}</div><div class="s">${fmt(best.date)}</div></div>
+      <div class="st"><div class="k1">Última sesión</div><div class="v">${fmtSec(last.dur)}</div><div class="s">${fmt(last.date)} · ${T.length} sesiones</div></div></div>
+    ${T.length >= 2 ? chart(T.map(l => ({ date:l.date, min:l.dur/60, max:l.dur/60 })), ['Minutos', '']) : '<p class="muted">Con 2 sesiones o más verás la gráfica.</p>'}
+    <h3>Historial</h3>${[...T].reverse().map(l => `<div class="hi"><span>${fmt(l.date)}</span><span><b>${fmtSec(l.dur)}</b></span><button class="ib" data-delog="${esc(l.id)}">✕</button></div>`).join('')}`);
+}
 function openPesoDetail(n){
   const L = logsFor(n); if (!L.length) return;
   const first = L[0], last = L[L.length-1], rec = L.reduce((a,l) => l.max > a.max ? l : a, L[0]);
   const base30 = [...L].reverse().find(l => l.date <= addDays(todayISO(), -30)) || first;
-  openOv('pdet', ovHead(esc(n), '‹ Volver') + `${pic(n,'big')}${staleNote(n, false)}
+  openOv('pdet', ovHead(esc(n), '‹ Volver') + `<h3 style="margin-top:4px">Evolución del peso mínimo y máximo</h3>
+    ${L.length >= 2 ? chart(L) : '<p class="muted">Con 2 sesiones o más verás la gráfica.</p>'}${staleNote(n, false)}
     <div class="stats">
       <div class="st"><div class="k1">Récord</div><div class="v">${fmtN(rec.max)} kg</div><div class="s">${fmt(rec.date)}</div></div>
       <div class="st"><div class="k1">Última sesión</div><div class="v">${rng(last)}</div><div class="s">${fmt(last.date)}${sr(last)}</div></div>
       <div class="st"><div class="k1">Desde el inicio</div><div class="v">${delta(last.max - first.max)}</div><div class="s">desde ${fmt(first.date)}</div></div>
       <div class="st"><div class="k1">Último mes</div><div class="v">${delta(last.max - base30.max)}</div><div class="s">${L.length} sesiones en total</div></div></div>
-    ${L.length >= 2 ? chart(L) : '<p class="muted">Con 2 sesiones o más verás la gráfica.</p>'}
-    <h3>Historial</h3>${[...L].reverse().map(l => `<div class="hi"><span>${fmt(l.date)}</span><span><b>${rng(l)}</b>${sr(l)}</span><button class="ib" data-delog="${esc(l.id)}">✕</button></div>`).join('')}`);
+    <h3>Historial</h3>${[...L].reverse().map(l => `<div class="hi"><span>${fmt(l.date)}</span><span><b>${rng(l)}</b>${sr(l)}</span><button class="ib" data-delog="${esc(l.id)}">✕</button></div>`).join('')}
+    ${IMG[n] ? `<div style="margin-top:14px">${pic(n,'big')}</div>` : ''}`);
 }
 $('#v-evo').addEventListener('click', e => {
   const t = e.target.closest('[data-tab]'); if (t) { evoTab = t.dataset.tab; renderEvo(); return; }
@@ -1206,34 +1232,56 @@ document.querySelector('nav').addEventListener('click', e => { const b = e.targe
 show('hoy');
 
 /* ---------- portada ---------- */
+function sessionInProgress(){
+  const today = todayISO(), T = state.timers[today] || {};
+  if (Object.values(T).some(t => !t.done)) return true;                       // algún grupo con el cronómetro sin finalizar
+  if (!state.logs.some(l => l.date === today)) return false;
+  const ap = activePlan(), tl = state.logs.filter(l => l.date === today && l.plan === ap.id).sort((a,b) => b.ts - a.ts)[0];
+  const d = tl && ap.days.find(x => x.id === tl.day); if (!d) return false;
+  return d.ex.some(n => !logOn(n, today) && !isSkip(n, today));              // quedan ejercicios por hacer
+}
+function runningDay(){
+  const today = todayISO(), ap = activePlan();
+  if (state.runDay && state.runDay.date === today && state.runDay.plan === ap.id) return state.runDay.day;
+  const tl = state.logs.filter(l => l.date === today && l.plan === ap.id).sort((a,b) => b.ts - a.ts)[0];
+  return tl ? tl.day : selDay;
+}
 function renderCover(){
   const h = new Date().getHours();
   $('#cvHello').textContent = (h < 6 ? 'Buenas noches' : h < 13 ? 'Buenos días' : h < 21 ? 'Buenas tardes' : 'Buenas noches') + ' 💪';
   const ap = activePlan(), d = ap.days.find(x => x.id === suggestedDay(ap));
   const idx = dayIndex(), today = todayISO(), inf = idx[today];
   const pre = today.slice(0,8), month = Object.keys(idx).filter(x => x.startsWith(pre)).length;
-  if (!cvPicked) { const tl = state.logs.filter(l => l.date === today && l.plan === ap.id).sort((a,b) => b.ts - a.ts)[0]; selDay = tl ? tl.day : (d ? d.id : selDay); cvPicked = true; }
-  const sd = ap.days.find(x => x.id === selDay);
-  $('#cvInfo').innerHTML = (inf ? `<div class="cvdone">✓ Hoy ya has ido${inf.logs.length ? ` · ${pl(inf.logs.length,'ejercicio','ejercicios')}` : ''}${inf.acts.length ? ` · ${inf.acts.map(a => actOf(a.a).ico).join('')}` : ''}</div>` : '')
-    + (ap.days.length ? `<div class="k1">¿Qué toca hoy? · ${esc(ap.name)}</div>
-        <div class="cvdays">${ap.days.map(x => `<button class="cvday ${x.id===selDay?'on':''}" data-cvday="${esc(x.id)}"><span>${esc(x.name)}${d && x.id===d.id ? '<span class="toca">TOCA</span>' : ''}</span><div class="dots">${dayGroups(x).map(g => `<i style="background:${gc(g)}"></i>`).join('')}</div></button>`).join('')}</div>
-        ${sd ? `<div class="gtags" style="margin-top:8px">${dayGroups(sd).map(gtag).join('')}</div>` : ''}`
-      : `<div class="t">Elige un plan en Ajustes</div>`)
-    + `<div class="cvst"><div><b>${month}</b><span>días este mes</span></div><div><b>${streak(idx)}</b><span>días seguidos</span></div><div><b>${state.logs.length}</b><span>registros</span></div></div>`;
+  const stats = `<div class="cvst"><div><b>${month}</b><span>días este mes</span></div><div><b>${streak(idx)}</b><span>días seguidos</span></div><div><b>${state.logs.length}</b><span>registros</span></div></div>`;
+  if (sessionInProgress()) {
+    selDay = runningDay(); cvPicked = true;
+    const day = ap.days.find(x => x.id === selDay), sms = sessMs(today), run = Object.values(state.timers[today] || {}).some(tRun);
+    const all = day ? day.ex : [], done = all.filter(n => logOn(n, today)).length;
+    $('#cvInfo').innerHTML = `<div class="cvrun"><div class="k1">Sesión a medias · ${esc(ap.name)}</div><div class="t">${day ? esc(day.name) : ''}</div>
+        ${day ? `<div class="gtags">${dayGroups(day).map(gtag).join('')}</div>` : ''}
+        <div class="prog"><i style="width:${all.length ? done/all.length*100 : 0}%"></i></div>
+        <div class="muted" style="margin-top:6px">${done} de ${all.length} hechos${sms || run ? ` · ⏱ <b ${run ? `data-tlive="${today}|*"` : ''}>${run ? clock(sms) : durMin(sms/60000)}</b>` : ''}</div></div>` + stats;
+    $('#cvBtns').innerHTML = `<button class="btn" id="cvGo" data-go="hoy">▶ Seguir</button>`;
+  } else {
+    if (!cvPicked) { const tl = state.logs.filter(l => l.date === today && l.plan === ap.id).sort((a,b) => b.ts - a.ts)[0]; selDay = tl ? tl.day : (d ? d.id : selDay); cvPicked = true; }
+    const sd = ap.days.find(x => x.id === selDay);
+    $('#cvInfo').innerHTML = (inf ? `<div class="cvdone">✓ Hoy ya has ido${inf.logs.length ? ` · ${pl(inf.logs.length,'ejercicio','ejercicios')}` : ''}${inf.acts.length ? ` · ${inf.acts.map(a => actOf(a.a).ico).join('')}` : ''}</div>` : '')
+      + (ap.days.length ? `<div class="k1">¿Qué toca hoy? · ${esc(ap.name)}</div>
+          <div class="cvdays">${ap.days.map(x => `<button class="cvday ${x.id===selDay?'on':''}" data-cvday="${esc(x.id)}"><span>${esc(x.name)}${d && x.id===d.id ? '<span class="toca">TOCA</span>' : ''}</span><div class="dots">${dayGroups(x).map(g => `<i style="background:${gc(g)}"></i>`).join('')}</div></button>`).join('')}</div>
+          ${sd ? `<div class="gtags" style="margin-top:8px">${dayGroups(sd).map(gtag).join('')}</div>` : ''}`
+        : `<div class="t">Elige un plan en Ajustes</div>`) + stats;
+    $('#cvBtns').innerHTML = `<div class="cvnav">
+      <button class="main" data-go="hoy"><span>🏋️</span>Hoy</button><button data-go="evo"><span>📈</span>Evolución</button>
+      <button data-go="cat"><span>📚</span>Ejercicios</button><button data-go="aj"><span>⚙️</span>Ajustes</button></div>`;
+  }
   $('#cvVer').innerHTML = `versión ${APP_VERSION}`;
 }
 renderCover();
-{ // si hay un cronómetro en marcha hoy, se entra directo al entreno
-  const T = state.timers[todayISO()] || {};
-  if (Object.values(T).some(tRun)) {
-    const tl = state.logs.filter(l => l.date === todayISO() && l.plan === state.activePlan).sort((a,b) => b.ts - a.ts)[0];
-    if (tl) selDay = tl.day;
-    if (state.runDay && state.runDay.date === todayISO() && state.runDay.plan === state.activePlan) selDay = state.runDay.day;
-    $('#cover').classList.add('hide'); show('hoy');
-  }
-}
 $('#cvInfo').addEventListener('click', e => { const b = e.target.closest('[data-cvday]'); if (b) { selDay = b.dataset.cvday; renderCover(); } });
-$('#cvGo').addEventListener('click', () => { selDate = todayISO(); openName = null; $('#cover').classList.add('hide'); show('hoy'); window.scrollTo(0,0); });
+$('#cvBtns').addEventListener('click', e => {
+  const b = e.target.closest('[data-go]'); if (!b) return;
+  selDate = todayISO(); openName = null; $('#cover').classList.add('hide'); show(b.dataset.go); window.scrollTo(0,0);
+});
 
 /* ---------- funcionamiento sin conexión y aviso de versión nueva ---------- */
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
